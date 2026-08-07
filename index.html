@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Community Pooja — Greenmark Galaxy</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+
+/* ── Variables ─────────────────────────────────────────── */
+:root {
+  --saffron: #E8891C;
+  --red:     #8B1A1A;
+  --gold:    #C9A84C;
+  --gold-l:  #F5E6B8;
+  --cream:   #FFF9EE;
+  --bg:      #FFFBF0;
+  --dark:    #1E1408;
+  --dark2:   #5C4020;
+  --muted:   #9A7850;
+  --green:   #2E7D32;
+  --green-l: #E8F5E9;
+  --border:  rgba(201,168,76,0.3);
+  --shadow:  0 4px 24px rgba(139,26,26,0.08);
+  --r:       14px;
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg width='44' height='44' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M22 2 L42 22 L22 42 L2 22 Z' fill='none' stroke='rgba(201%2C168%2C76%2C0.13)' stroke-width='0.9'/%3E%3C/svg%3E");
+  color: var(--dark);
+  line-height: 1.6;
+}
+
+/* ── Section visibility ─────────────────────────────────── */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── Shared layout ──────────────────────────────────────── */
+.container { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+
+/* ── Top bar (inner pages) ──────────────────────────────── */
+.topbar {
+  background: #0D3535;
+  padding: 14px 20px;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--gold-l);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.back-btn:hover { opacity: 0.75; }
+.topbar-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ── Event info strip ───────────────────────────────────── */
+.event-strip {
+  background: linear-gradient(135deg, rgba(232,137,28,0.07), rgba(201,168,76,0.05));
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+}
+.strip-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.event-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.event-meta span { font-size: 13px; color: var(--dark2); display: flex; align-items: center; gap: 4px; }
+.amount-pill {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.paid { background: rgba(232,137,28,0.12); color: var(--saffron); border: 1px solid rgba(232,137,28,0.25); }
+.free { background: var(--green-l); color: var(--green); }
+
+/* ── Form card ──────────────────────────────────────────── */
+.form-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  margin: 24px 0 8px;
+}
+
+/* ── Form fields ────────────────────────────────────────── */
+.field { margin-bottom: 18px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark2);
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+.req { color: var(--saffron); margin-left: 2px; }
+.opt { color: var(--muted); font-weight: 400; font-size: 12px; }
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: var(--dark);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B1A1A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px;
+  padding-right: 38px;
+}
+.field input[type="date"] { color-scheme: light; }
+.field textarea { resize: vertical; min-height: 80px; }
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 3px rgba(232,137,28,0.12);
+  background: #fff;
+}
+.field input::placeholder,
+.field textarea::placeholder { color: #C4A882; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 480px) { .two-col { grid-template-columns: 1fr; gap: 0; } }
+
+/* ── Submit button ──────────────────────────────────────── */
+.submit-btn {
+  width: 100%;
+  margin-top: 22px;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--red), #6B1515);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s;
+}
+.submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139,26,26,0.25); }
+.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Spinner ────────────────────────────────────────────── */
+.spinner {
+  width: 17px; height: 17px;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: none;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Result boxes ───────────────────────────────────────── */
+.result-box {
+  border-radius: var(--r);
+  padding: 22px 24px;
+  margin: 0 0 28px;
+  display: none;
+}
+.result-box.show { display: block; }
+.result-success { background: var(--green-l); border: 1px solid rgba(46,125,50,0.2); }
+.result-error   { background: #FFF3E0;         border: 1px solid rgba(230,81,0,0.2); }
+
+.result-box h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.result-success h3 { color: var(--green); }
+.result-error h3   { color: #BF360C; }
+.result-box p { font-size: 14px; color: var(--dark2); line-height: 1.7; }
+.result-box p + p { margin-top: 5px; }
+
+.reg-id-badge {
+  display: inline-block;
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid rgba(46,125,50,0.3);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.06em;
+}
+
+.payment-note {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--dark2);
+  line-height: 1.8;
+}
+.payment-note strong { color: var(--dark); }
+
+.status-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  color: var(--red);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── ════════════════════════════════════════════════════ */
+/* ── HOME PAGE                                          */
+/* ── ════════════════════════════════════════════════════ */
+
+.page-bar { height: calc(5px + env(safe-area-inset-top, 0px)); background: var(--red); }
+
+.home-header {
+  background: #0D3535;
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.om-badge {
+  width: 34px;
+  height: 34px;
+  background: #D4620A;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: #fff;
+  flex-shrink: 0;
+  font-family: serif;
+  line-height: 1;
+}
+.home-brand {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1A2A1A;
+  background: var(--gold);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.status-pill:hover { background: #D4B050; transform: translateY(-1px); }
+
+.events-grid {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 20px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Event card */
+.event-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.event-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(139,26,26,0.1); }
+
+.card-top-bar { height: 3px; background: linear-gradient(90deg, var(--saffron), var(--gold), #D4880A); }
+.card-body { padding: 20px 22px; }
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+.card-name { display: flex; align-items: center; gap: 10px; }
+.card-emoji { font-size: 26px; line-height: 1; }
+.card-name h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.2;
+}
+.card-amt {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.card-amt.paid { background: rgba(232,137,28,0.1); color: var(--saffron); border: 1px solid rgba(232,137,28,0.2); }
+.card-amt.free { background: var(--green-l); color: var(--green); }
+.card-amt.closed { background: #f5f5f5; color: #999; }
+
+.card-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 11px;
+}
+.card-info span { font-size: 13px; color: var(--muted); }
+.card-desc {
+  font-size: 14px;
+  color: var(--dark2);
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+
+.card-actions { display: flex; gap: 9px; }
+.card-btn {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 9px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.card-btn-primary { background: linear-gradient(135deg, var(--red), #6B1515); color: #fff; }
+.card-btn-primary:hover { box-shadow: 0 6px 20px rgba(139,26,26,0.22); transform: translateY(-1px); }
+.card-btn-disabled { background: #f2f2f2; color: #aaa; cursor: not-allowed; }
+
+/* Footer */
+.home-footer {
+  background: #0D3535;
+  color: var(--gold-l);
+  padding: 24px 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  border-bottom: 5px solid var(--red);
+}
+.home-footer strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  display: block;
+  margin-bottom: 4px;
+}
+.home-footer p { font-size: 12px; opacity: 0.65; }
+
+/* ── ════════════════════════════════════════════════════ */
+/* ── STATUS PAGE                                        */
+/* ── ════════════════════════════════════════════════════ */
+
+.search-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 26px 28px;
+  margin: 24px 0 16px;
+}
+.search-card h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+.search-card p { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+.search-row { display: flex; gap: 10px; }
+.search-row input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: var(--dark);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-row input:focus { border-color: var(--saffron); box-shadow: 0 0 0 3px rgba(232,137,28,0.12); }
+.search-row input::placeholder { color: #C4A882; }
+.search-row button {
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--red), #6B1515);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.search-row button:hover { box-shadow: 0 6px 20px rgba(139,26,26,0.22); }
+
+.status-results { margin-bottom: 32px; }
+
+.reg-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(139,26,26,0.05);
+}
+.reg-event {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 10px;
+}
+.reg-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 20px;
+  margin-bottom: 12px;
+}
+.reg-details span { font-size: 13px; color: var(--dark2); }
+.reg-details strong { color: var(--dark); }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.badge-pending  { background: #FFF3E0; color: #E65100; }
+.badge-received { background: var(--green-l); color: var(--green); }
+.badge-free     { background: var(--green-l); color: var(--green); }
+
+.pay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, var(--saffron), #C47010);
+  color: #fff;
+  border-radius: 9px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+.pay-btn:hover { box-shadow: 0 6px 20px rgba(232,137,28,0.28); transform: translateY(-1px); }
+
+.empty-state {
+  text-align: center;
+  padding: 36px 20px;
+  color: var(--muted);
+}
+.empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+.empty-state p { font-size: 14px; line-height: 1.7; }
+
+</style>
+</head>
+<body>
+<div class="page-bar"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CONFIG — Edit this block to update all event details
+     ══════════════════════════════════════════════════════════ -->
+<script>
+const CONFIG = {
+  API_URL:        'https://script.google.com/macros/s/AKfycbxJ3O50Tcq3wFONxE5mkgLYMRGlQs3l5j8Y50LfVZXdrx_2RKgDCdANrQtDLzdNzDTa/exec',
+  APARTMENT_NAME: 'Greenmark Galaxy Apartments',
+  UPI_ID:         'temple@upi',          // UPI ID shown on payment confirmation pages
+
+  events: {
+    'daily-pooja': {
+      name:        'Daily Pooja',
+      emoji:       '🪔',
+      displayDate: 'April 1–30, 2026',
+      dateFrom:    '2026-04-01',          // date picker min
+      dateTo:      '2026-04-30',          // date picker max
+      time:        'Morning & Evening',
+      place:       'Temple Area',
+      amount:      516,
+      amountLabel: '₹516 / slot',
+      description: 'Register your family for daily pooja during the auspicious month. Morning and evening slots available.',
+      slots:       ['Morning', 'Evening'],
+      status:      'active',              // 'active' or 'closed'
+    },
+    'kumkuma-pooja': {
+      name:        'Kumkuma Pooja',
+      emoji:       '🔱',
+      displayDate: 'Apr 19, 2026',
+      time:        '6:00 PM – 7:30 PM',
+      place:       'Temple Garden',
+      amount:      0,
+      amountLabel: 'Free',
+      description: 'A special Kumkuma Pooja for all ladies of the community. All residents are warmly invited.',
+      status:      'active',
+    },
+    'ganapathi-homam': {
+      name:        'Ganapathi Homam',
+      emoji:       '🔥',
+      displayDate: 'Apr 27, 2026',
+      time:        '8:00 AM – 12:00 PM',
+      place:       'Community Hall',
+      amount:      1116,
+      amountLabel: '₹1116 / family',
+      description: 'An auspicious Ganapathi Homam for prosperity and well-being of all families.',
+      status:      'active',
+    }
+  }
+};
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     HOME
+     ══════════════════════════════════════════════════════════ -->
+<div id="s-home" class="section">
+
+  <div class="home-header">
+    <div class="header-left">
+      <div class="om-badge">ॐ</div>
+      <div class="home-brand">GGUC 2026</div>
+    </div>
+    <button class="status-pill" onclick="nav('status')">
+      🔍 Check Status
+    </button>
+  </div>
+
+  <div class="events-grid" id="events-grid">
+    <!-- rendered by JS -->
+  </div>
+
+  <div class="home-footer">
+    <strong id="footer-apt"></strong>
+    <p>For assistance, contact the Pooja Committee</p>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DAILY POOJA
+     ══════════════════════════════════════════════════════════ -->
+<div id="s-daily-pooja" class="section">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
+    <span class="topbar-title">Daily Pooja Registration</span>
+  </div>
+
+  <div class="event-strip">
+    <div class="strip-inner">
+      <div class="event-meta">
+        <span>📅 April 1–30, 2026</span>
+        <span>🕐 Morning &amp; Evening</span>
+      </div>
+      <span class="amount-pill paid">₹516 per slot</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="form-card">
+      <div class="field">
+        <label>Name <span class="req">*</span></label>
+        <input type="text" id="dp-name" placeholder="Your full name">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Flat Number <span class="req">*</span></label>
+          <input type="text" id="dp-flat" placeholder="e.g. A-402">
+        </div>
+        <div class="field">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" id="dp-phone" placeholder="10-digit number" maxlength="10">
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Date <span class="req">*</span></label>
+          <input type="date" id="dp-date">
+        </div>
+        <div class="field">
+          <label>Slot <span class="req">*</span></label>
+          <select id="dp-slot">
+            <option value="">Select slot</option>
+            <option value="Morning">Morning</option>
+            <option value="Evening">Evening</option>
+          </select>
+        </div>
+      </div>
+      <button class="submit-btn" id="dp-submit" onclick="submitDailyPooja()">
+        <span class="spinner" id="dp-spinner"></span>
+        <span id="dp-label">Register</span>
+      </button>
+    </div>
+
+    <div class="result-box result-success" id="dp-success">
+      <h3>You're registered!</h3>
+      <p>Thank you for registering for Daily Pooja.</p>
+      <div class="reg-id-badge" id="dp-reg-id"></div>
+      <div class="payment-note">
+        <strong>Payment:</strong> Please transfer ₹516 to UPI ID
+        <strong id="dp-upi"></strong> using your Flat Number as the payment reference.<br>
+        After payment, share a screenshot to <strong>9966514485</strong> or <strong>9490133404</strong> to get your payment status updated.
+      </div>
+    </div>
+
+    <div class="result-box result-error" id="dp-error">
+      <h3 id="dp-err-title">Error</h3>
+      <p id="dp-err-msg"></p>
+      <button class="status-link-btn" onclick="nav('status')" style="margin-top:10px">
+        Check your status →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     KUMKUMA POOJA
+     ══════════════════════════════════════════════════════════ -->
+<div id="s-kumkuma-pooja" class="section">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
+    <span class="topbar-title">Kumkuma Pooja Registration</span>
+  </div>
+
+  <div class="event-strip">
+    <div class="strip-inner">
+      <div class="event-meta">
+        <span>📅 Apr 19, 2026</span>
+        <span>🕐 6:00 PM – 7:30 PM</span>
+      </div>
+      <span class="amount-pill free">Free</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="form-card">
+      <div class="field">
+        <label>Name <span class="req">*</span></label>
+        <input type="text" id="kp-name" placeholder="Your full name">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Flat Number <span class="req">*</span></label>
+          <input type="text" id="kp-flat" placeholder="e.g. A-402">
+        </div>
+        <div class="field">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" id="kp-phone" placeholder="10-digit number" maxlength="10">
+        </div>
+      </div>
+      <button class="submit-btn" id="kp-submit" onclick="submitKumkuma()">
+        <span class="spinner" id="kp-spinner"></span>
+        <span id="kp-label">Register</span>
+      </button>
+    </div>
+
+    <div class="result-box result-success" id="kp-success">
+      <h3>You're registered!</h3>
+      <p>Thank you! See you on <strong>April 19, 2026</strong> at the Temple Garden.</p>
+      <div class="reg-id-badge" id="kp-reg-id"></div>
+    </div>
+
+    <div class="result-box result-error" id="kp-error">
+      <h3 id="kp-err-title">Error</h3>
+      <p id="kp-err-msg"></p>
+      <button class="status-link-btn" onclick="nav('status')" style="margin-top:10px">
+        Check your status →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     GANAPATHI HOMAM
+     ══════════════════════════════════════════════════════════ -->
+<div id="s-ganapathi-homam" class="section">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
+    <span class="topbar-title">Ganapathi Homam Registration</span>
+  </div>
+
+  <div class="event-strip">
+    <div class="strip-inner">
+      <div class="event-meta">
+        <span>📅 Apr 27, 2026</span>
+        <span>🕐 8:00 AM – 12:00 PM</span>
+      </div>
+      <span class="amount-pill paid">₹1116 per family</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="form-card">
+      <div class="field">
+        <label>Name <span class="req">*</span></label>
+        <input type="text" id="gh-name" placeholder="Your full name">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Flat Number <span class="req">*</span></label>
+          <input type="text" id="gh-flat" placeholder="e.g. A-402">
+        </div>
+        <div class="field">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" id="gh-phone" placeholder="10-digit number" maxlength="10">
+        </div>
+      </div>
+      <button class="submit-btn" id="gh-submit" onclick="submitHomam()">
+        <span class="spinner" id="gh-spinner"></span>
+        <span id="gh-label">Register</span>
+      </button>
+    </div>
+
+    <div class="result-box result-success" id="gh-success">
+      <h3>You're registered!</h3>
+      <p>Thank you for registering for Ganapathi Homam.</p>
+      <div class="reg-id-badge" id="gh-reg-id"></div>
+      <div class="payment-note">
+        <strong>Payment:</strong> Please transfer ₹1116 to UPI ID
+        <strong id="gh-upi"></strong> using your Flat Number as the payment reference.<br>
+        After payment, share a screenshot to <strong>9966514485</strong> or <strong>9490133404</strong> to get your payment status updated.
+      </div>
+    </div>
+
+    <div class="result-box result-error" id="gh-error">
+      <h3 id="gh-err-title">Error</h3>
+      <p id="gh-err-msg"></p>
+      <button class="status-link-btn" onclick="nav('status')" style="margin-top:10px">
+        Check your status →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     STATUS / SEARCH
+     ══════════════════════════════════════════════════════════ -->
+<div id="s-status" class="section">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
+    <span class="topbar-title">Registration Status</span>
+  </div>
+
+  <div class="container">
+    <div class="search-card">
+      <h2>Check Your Status</h2>
+      <p>Enter your flat number or phone to see all your registrations and payment status.</p>
+      <div class="search-row">
+        <input type="text" id="sq" placeholder="Flat number or phone  (e.g. A-402)"
+               onkeydown="if(event.key==='Enter') doSearch()">
+        <button onclick="doSearch()">Search</button>
+      </div>
+    </div>
+
+    <div class="status-results" id="status-results"></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ══════════════════════════════════════════════════════════ -->
+<script>
+
+/* ── Navigation ──────────────────────────────────────────── */
+
+const ALL_SECTIONS = ['home', 'daily-pooja', 'kumkuma-pooja', 'ganapathi-homam', 'status'];
+
+function nav(id) {
+  ALL_SECTIONS.forEach(s => {
+    document.getElementById('s-' + s).classList.toggle('active', s === id);
+  });
+  window.scrollTo(0, 0);
+  try { history.replaceState(null, '', id === 'home' ? '#' : '#' + id); } catch(e) {}
+}
+
+/* ── Init on load ────────────────────────────────────────── */
+
+window.addEventListener('load', function () {
+  // Populate apartment name in footer
+  document.getElementById('footer-apt').textContent = CONFIG.APARTMENT_NAME;
+
+  // Render home event cards
+  renderCards();
+
+  // Set date picker bounds for Daily Pooja
+  const dpDate = document.getElementById('dp-date');
+  const dpCfg  = CONFIG.events['daily-pooja'];
+  dpDate.min   = dpCfg.dateFrom;
+  dpDate.max   = dpCfg.dateTo;
+
+  // Route to correct section based on hash
+  const hash = window.location.hash.replace('#', '').trim();
+  nav(ALL_SECTIONS.includes(hash) ? hash : 'home');
+});
+
+/* ── Render home event cards ─────────────────────────────── */
+
+function renderCards() {
+  const grid = document.getElementById('events-grid');
+  const keys = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
+
+  grid.innerHTML = keys.map(key => {
+    const e      = CONFIG.events[key];
+    const closed = e.status === 'closed';
+
+    const amtClass = closed ? 'closed' : (e.amount === 0 ? 'free' : 'paid');
+    const amtText  = closed ? 'Closed' : e.amountLabel;
+
+    const regBtn = closed
+      ? `<button class="card-btn card-btn-disabled" disabled>Registrations Closed</button>`
+      : `<button class="card-btn card-btn-primary" onclick="nav('${key}')">Register &rarr;</button>`;
+
+    return `
+<div class="event-card">
+  <div class="card-top-bar"></div>
+  <div class="card-body">
+    <div class="card-head">
+      <div class="card-name">
+        <span class="card-emoji">${e.emoji}</span>
+        <h2>${e.name}</h2>
+      </div>
+      <span class="card-amt ${amtClass}">${amtText}</span>
+    </div>
+    <div class="card-info">
+      <span>📅 ${e.displayDate}</span>
+      <span>🕐 ${e.time}</span>
+    </div>
+    <p class="card-desc">${e.description}</p>
+    <div class="card-actions">
+      ${regBtn}
+    </div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+/* ── API helper ──────────────────────────────────────────── */
+
+async function api(payload) {
+  const r = await fetch(CONFIG.API_URL, {
+    method:   'POST',
+    headers:  { 'Content-Type': 'text/plain' },
+    body:     JSON.stringify(payload),
+    redirect: 'follow',
+  });
+  if (!r.ok) throw new Error('Server error: ' + r.status);
+  return r.json();
+}
+
+/* ── Form state helpers ──────────────────────────────────── */
+
+function setLoading(pfx, on) {
+  const btn = document.getElementById(pfx + '-submit');
+  const sp  = document.getElementById(pfx + '-spinner');
+  const lbl = document.getElementById(pfx + '-label');
+  btn.disabled          = on;
+  sp.style.display      = on ? 'inline-block' : 'none';
+  lbl.textContent       = on ? 'Submitting…' : 'Register';
+}
+
+function clearResults(pfx) {
+  ['success', 'error'].forEach(t => {
+    document.getElementById(pfx + '-' + t).classList.remove('show');
+  });
+}
+
+function showSuccess(pfx, regId) {
+  clearResults(pfx);
+  const el = document.getElementById(pfx + '-success');
+  el.classList.add('show');
+  const badge = document.getElementById(pfx + '-reg-id');
+  if (badge) badge.textContent = 'Registration ID: ' + regId;
+  // hide the submit button so user can't resubmit
+  document.getElementById(pfx + '-submit').style.display = 'none';
+}
+
+function showError(pfx, title, msg) {
+  clearResults(pfx);
+  document.getElementById(pfx + '-error').classList.add('show');
+  document.getElementById(pfx + '-err-title').textContent = title;
+  document.getElementById(pfx + '-err-msg').textContent   = msg;
+}
+
+/* ── Validation ──────────────────────────────────────────── */
+
+function validPhone(v) { return /^[6-9]\d{9}$/.test(v); }
+function validFlat(v)  { return v.trim().length >= 2; }
+
+function collectBase(pfx) {
+  return {
+    name:  document.getElementById(pfx + '-name').value.trim(),
+    flat:  document.getElementById(pfx + '-flat').value.trim().toUpperCase(),
+    phone: document.getElementById(pfx + '-phone').value.trim(),
+  };
+}
+
+function baseCheck(pfx, d) {
+  if (!d.name)            { showError(pfx, 'Missing Name', 'Please enter your full name.'); return false; }
+  if (!validFlat(d.flat)) { showError(pfx, 'Invalid Flat', 'Please enter a valid flat number (e.g. A-402).'); return false; }
+  if (!validPhone(d.phone)) { showError(pfx, 'Invalid Phone', 'Please enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.'); return false; }
+  return true;
+}
+
+/* ── Daily Pooja submit ──────────────────────────────────── */
+
+async function submitDailyPooja() {
+  clearResults('dp');
+  const d    = collectBase('dp');
+  const date = document.getElementById('dp-date').value;
+  const slot = document.getElementById('dp-slot').value;
+
+  if (!baseCheck('dp', d)) return;
+  if (!date) { showError('dp', 'Missing Date', 'Please select a date.'); return; }
+  if (!slot) { showError('dp', 'Missing Slot', 'Please select Morning or Evening.'); return; }
+
+  setLoading('dp', true);
+  try {
+    const res = await api({ action: 'register', event: 'daily-pooja', data: { ...d, date, slot } });
+    if (res.success) {
+      document.getElementById('dp-upi').textContent = CONFIG.UPI_ID;
+      showSuccess('dp', res.regId);
+    } else {
+      handleRegError('dp', res, d.flat);
+    }
+  } catch (e) {
+    showError('dp', 'Connection Error', e.message);
+  } finally {
+    setLoading('dp', false);
+  }
+}
+
+/* ── Kumkuma Pooja submit ────────────────────────────────── */
+
+async function submitKumkuma() {
+  clearResults('kp');
+  const d = collectBase('kp');
+
+  if (!baseCheck('kp', d)) return;
+
+  setLoading('kp', true);
+  try {
+    const res = await api({ action: 'register', event: 'kumkuma-pooja', data: { ...d } });
+    if (res.success) {
+      showSuccess('kp', res.regId);
+    } else {
+      handleRegError('kp', res, d.flat);
+    }
+  } catch (e) {
+    showError('kp', 'Connection Error', e.message);
+  } finally {
+    setLoading('kp', false);
+  }
+}
+
+/* ── Ganapathi Homam submit ──────────────────────────────── */
+
+async function submitHomam() {
+  clearResults('gh');
+  const d = collectBase('gh');
+
+  if (!baseCheck('gh', d)) return;
+
+  setLoading('gh', true);
+  try {
+    const res = await api({ action: 'register', event: 'ganapathi-homam', data: { ...d } });
+    if (res.success) {
+      document.getElementById('gh-upi').textContent = CONFIG.UPI_ID;
+      showSuccess('gh', res.regId);
+    } else {
+      handleRegError('gh', res, d.flat);
+    }
+  } catch (e) {
+    showError('gh', 'Connection Error', e.message);
+  } finally {
+    setLoading('gh', false);
+  }
+}
+
+/* ── Registration error handler ──────────────────────────── */
+
+function handleRegError(pfx, res, flat) {
+  if (res.error === 'duplicate') {
+    showError(pfx, 'Already Registered',
+      `Flat ${flat} is already registered. Tap "Check Status" at the top of the page to view your registration and payment details.`);
+  } else if (res.error === 'closed') {
+    showError(pfx, 'Registrations Closed', 'Registrations for this event are currently closed.');
+  } else if (res.error === 'full') {
+    showError(pfx, 'Slots Full', 'All spots for this event/slot are filled. Please contact the committee.');
+  } else {
+    showError(pfx, 'Something went wrong', res.message || 'Please try again or contact the committee.');
+  }
+}
+
+/* ── Status search ───────────────────────────────────────── */
+
+async function doSearch() {
+  const q = document.getElementById('sq').value.trim();
+  if (!q) {
+    document.getElementById('status-results').innerHTML =
+      '<p style="text-align:center;color:var(--red);padding:16px 0;font-weight:600">Please enter your flat number or phone number.</p>';
+    return;
+  }
+
+  const container = document.getElementById('status-results');
+  container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:24px 0">Searching…</p>';
+
+  try {
+    const res = await api({ action: 'getStatus', query: q });
+
+    if (!res.results || res.results.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🙏</div>
+          <p>No registrations found for <strong>"${q}"</strong>.<br>
+          Please check your flat number or phone and try again.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = res.results.map(r => {
+      const evCfg    = CONFIG.events[r.eventKey] || {};
+      const isFree   = (evCfg.amount === 0);
+      const isRecvd  = r.paymentStatus === 'Received';
+
+      let statusHtml = '';
+      if (isFree) {
+        statusHtml = `<span class="status-badge badge-free">Free Event</span>`;
+      } else if (isRecvd) {
+        statusHtml = `<span class="status-badge badge-received">&#10003; Payment Received</span>`;
+      } else {
+        statusHtml = `<span class="status-badge badge-pending">&#9203; Payment Pending</span>`;
+      }
+
+      const payBtnHtml = (r.paymentLink && !isFree && !isRecvd)
+        ? `<a href="${r.paymentLink}" target="_blank" rel="noopener" class="pay-btn">Pay Now &rarr;</a>`
+        : '';
+
+      const slotHtml = r.slot
+        ? `<span><strong>Date:</strong> ${fmtDate(r.date)}</span><span><strong>Slot:</strong> ${r.slot}</span>`
+        : '';
+
+      return `
+<div class="reg-card">
+  <div class="reg-event">${evCfg.emoji || ''} ${evCfg.name || r.eventKey}</div>
+  <div class="reg-details">
+    <span><strong>Reg ID:</strong> ${r.regId}</span>
+    <span><strong>Name:</strong> ${r.name}</span>
+    <span><strong>Flat:</strong> ${r.flat}</span>
+    ${slotHtml}
+    <span><strong>Registered on:</strong> ${fmtDate(r.timestamp)}</span>
+  </div>
+  ${statusHtml}
+  ${payBtnHtml}
+</div>`;
+    }).join('');
+
+  } catch (e) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">&#9888;&#65039;</div>
+        <p>${e.message || 'Could not connect. Please try again.'}</p>
+      </div>`;
+  }
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  try {
+    return new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return ts; }
+}
+
+</script>
+</body>
+</html>
