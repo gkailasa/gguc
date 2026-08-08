@@ -920,9 +920,10 @@ function paymentContactsHtml(style) {
     .join(' or ');
 }
 
-function paymentNoteHtml(amount, eventKey) {
+function paymentNoteHtml(amount, eventKey, flat) {
   const evCfg  = CONFIG.events[eventKey] || {};
-  const upiLink = `upi://pay?pa=${encodeURIComponent(CONFIG.UPI_ID)}&am=${amount}&cu=INR&tn=${encodeURIComponent(evCfg.name || eventKey)}`;
+  const note   = flat ? `${evCfg.name || eventKey} - Flat ${flat}` : (evCfg.name || eventKey);
+  const upiLink = `upi://pay?pa=${encodeURIComponent(CONFIG.UPI_ID)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
   return `<div class="payment-note">
     <p style="margin-bottom:8px;">
       Pay <strong>&#8377;${amount}</strong> via UPI to <span style="font-family:monospace;background:rgba(201,168,76,0.15);padding:2px 7px;border-radius:5px;color:var(--dark);">${CONFIG.UPI_ID}</span>
@@ -947,9 +948,7 @@ window.addEventListener('load', function () {
   dpDate.min   = dpCfg.dateFrom;
   dpDate.max   = dpCfg.dateTo;
 
-  // Populate payment note blocks in registration success panels
-  document.getElementById('dp-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['daily-pooja'].amount, 'daily-pooja');
-  document.getElementById('gh-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['ganapathi-homam'].amount, 'ganapathi-homam');
+  // Payment note blocks are populated after successful registration (need flat number)
 
   // Route to correct section based on hash
   const hash = window.location.hash.replace('#', '').trim();
@@ -1083,6 +1082,7 @@ async function submitDailyPooja() {
   try {
     const res = await api({ action: 'register', event: 'daily-pooja', data: { ...d, date, slot } });
     if (res.success) {
+      document.getElementById('dp-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['daily-pooja'].amount, 'daily-pooja', d.flat);
       showSuccess('dp', res.regId);
     } else {
       handleRegError('dp', res, d.flat);
@@ -1129,6 +1129,7 @@ async function submitHomam() {
   try {
     const res = await api({ action: 'register', event: 'ganapathi-homam', data: { ...d } });
     if (res.success) {
+      document.getElementById('gh-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['ganapathi-homam'].amount, 'ganapathi-homam', d.flat);
       showSuccess('gh', res.regId);
     } else {
       handleRegError('gh', res, d.flat);
@@ -1195,7 +1196,7 @@ async function doSearch() {
         statusHtml = `<span class="status-badge badge-received">&#10003; Payment Received</span>`;
       } else {
         statusHtml = `<span class="status-badge badge-pending">&#9203; Payment Pending</span>
-        ${paymentNoteHtml(evCfg.amount, r.eventKey)}`;
+        ${paymentNoteHtml(evCfg.amount, r.eventKey, r.flat)}`;
       }
 
       const payBtnHtml = (r.paymentLink && !isFree && !isRecvd)
