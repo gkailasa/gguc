@@ -200,6 +200,41 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Progress bar ───────────────────────────────────────── */
+.form-progress {
+  height: 3px;
+  background: rgba(201,168,76,0.15);
+  border-radius: var(--r) var(--r) 0 0;
+  overflow: hidden;
+  display: none;
+  margin: -26px -28px 24px;
+}
+.form-progress.active { display: block; }
+.form-progress::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, var(--gold), var(--saffron), var(--gold));
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-250%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ── Animated dots ──────────────────────────────────────── */
+@keyframes dots {
+  0%, 20%  { content: ''; }
+  40%      { content: '.'; }
+  60%      { content: '··'; }
+  80%, 100%{ content: '···'; }
+}
+.btn-dots::after {
+  content: '';
+  animation: dots 1.2s steps(1) infinite;
+}
+
 /* ── Result boxes ───────────────────────────────────────── */
 .result-box {
   border-radius: var(--r);
@@ -547,7 +582,8 @@ body {
 const CONFIG = {
   API_URL:        'https://script.google.com/macros/s/AKfycbxJ3O50Tcq3wFONxE5mkgLYMRGlQs3l5j8Y50LfVZXdrx_2RKgDCdANrQtDLzdNzDTa/exec',
   APARTMENT_NAME: 'Greenmark Galaxy Apartments',
-  UPI_ID:         'temple@upi',          // UPI ID shown on payment confirmation pages
+  UPI_ID:         'galaxyapts@icici',     // UPI ID shown on payment confirmation pages
+  PAYMENT_CONTACTS: ['9966514485', '9490133404'],  // WhatsApp numbers for screenshot sharing
 
   events: {
     'daily-pooja': {
@@ -638,6 +674,7 @@ const CONFIG = {
 
   <div class="container">
     <div class="form-card">
+      <div class="form-progress" id="dp-progress"></div>
       <div class="field">
         <label>Name <span class="req">*</span></label>
         <input type="text" id="dp-name" placeholder="Your full name">
@@ -676,11 +713,7 @@ const CONFIG = {
       <h3>You're registered!</h3>
       <p>Thank you for registering for Daily Pooja.</p>
       <div class="reg-id-badge" id="dp-reg-id"></div>
-      <div class="payment-note">
-        <strong>Payment:</strong> Please transfer ₹516 to UPI ID
-        <strong id="dp-upi"></strong> using your Flat Number as the payment reference.<br>
-        After payment, share a screenshot to <strong>9966514485</strong> or <strong>9490133404</strong> to get your payment status updated.
-      </div>
+      <div id="dp-payment-note"></div>
     </div>
 
     <div class="result-box result-error" id="dp-error">
@@ -716,6 +749,7 @@ const CONFIG = {
 
   <div class="container">
     <div class="form-card">
+      <div class="form-progress" id="kp-progress"></div>
       <div class="field">
         <label>Name <span class="req">*</span></label>
         <input type="text" id="kp-name" placeholder="Your full name">
@@ -775,6 +809,7 @@ const CONFIG = {
 
   <div class="container">
     <div class="form-card">
+      <div class="form-progress" id="gh-progress"></div>
       <div class="field">
         <label>Name <span class="req">*</span></label>
         <input type="text" id="gh-name" placeholder="Your full name">
@@ -799,11 +834,7 @@ const CONFIG = {
       <h3>You're registered!</h3>
       <p>Thank you for registering for Ganapathi Homam.</p>
       <div class="reg-id-badge" id="gh-reg-id"></div>
-      <div class="payment-note">
-        <strong>Payment:</strong> Please transfer ₹1116 to UPI ID
-        <strong id="gh-upi"></strong> using your Flat Number as the payment reference.<br>
-        After payment, share a screenshot to <strong>9966514485</strong> or <strong>9490133404</strong> to get your payment status updated.
-      </div>
+      <div id="gh-payment-note"></div>
     </div>
 
     <div class="result-box result-error" id="gh-error">
@@ -880,6 +911,27 @@ function nav(id) {
   }, { passive: true });
 })();
 
+/* ── Payment helpers ─────────────────────────────────────── */
+
+function paymentContactsHtml(style) {
+  const s = style || '';
+  return CONFIG.PAYMENT_CONTACTS
+    .map(n => `<strong ${s}>${n}</strong>`)
+    .join(' or ');
+}
+
+function paymentNoteHtml(amount, eventKey) {
+  const evCfg  = CONFIG.events[eventKey] || {};
+  const upiLink = `upi://pay?pa=${encodeURIComponent(CONFIG.UPI_ID)}&am=${amount}&cu=INR&tn=${encodeURIComponent(evCfg.name || eventKey)}`;
+  return `<div class="payment-note">
+    <p style="margin-bottom:8px;">
+      Pay <strong>&#8377;${amount}</strong> via UPI to <span style="font-family:monospace;background:rgba(201,168,76,0.15);padding:2px 7px;border-radius:5px;color:var(--dark);">${CONFIG.UPI_ID}</span>
+    </p>
+    <a href="${upiLink}" style="display:inline-block;background:var(--red);color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;text-decoration:none;margin-bottom:8px;">Pay &#8377;${amount} Now &rarr;</a>
+    <p style="color:var(--muted);">Share payment screenshot to ${paymentContactsHtml('style="color:var(--dark2);"')} for payment status update.</p>
+  </div>`;
+}
+
 /* ── Init on load ────────────────────────────────────────── */
 
 window.addEventListener('load', function () {
@@ -894,6 +946,10 @@ window.addEventListener('load', function () {
   const dpCfg  = CONFIG.events['daily-pooja'];
   dpDate.min   = dpCfg.dateFrom;
   dpDate.max   = dpCfg.dateTo;
+
+  // Populate payment note blocks in registration success panels
+  document.getElementById('dp-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['daily-pooja'].amount, 'daily-pooja');
+  document.getElementById('gh-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['ganapathi-homam'].amount, 'ganapathi-homam');
 
   // Route to correct section based on hash
   const hash = window.location.hash.replace('#', '').trim();
@@ -957,12 +1013,15 @@ async function api(payload) {
 /* ── Form state helpers ──────────────────────────────────── */
 
 function setLoading(pfx, on) {
-  const btn = document.getElementById(pfx + '-submit');
-  const sp  = document.getElementById(pfx + '-spinner');
-  const lbl = document.getElementById(pfx + '-label');
-  btn.disabled          = on;
-  sp.style.display      = on ? 'inline-block' : 'none';
-  lbl.textContent       = on ? 'Submitting…' : 'Register';
+  const btn  = document.getElementById(pfx + '-submit');
+  const sp   = document.getElementById(pfx + '-spinner');
+  const lbl  = document.getElementById(pfx + '-label');
+  const prog = document.getElementById(pfx + '-progress');
+  btn.disabled     = on;
+  sp.style.display = on ? 'inline-block' : 'none';
+  if (on) { lbl.textContent = 'Please wait'; lbl.classList.add('btn-dots'); }
+  else    { lbl.textContent = 'Register';    lbl.classList.remove('btn-dots'); }
+  if (prog) prog.classList.toggle('active', on);
 }
 
 function clearResults(pfx) {
@@ -1024,7 +1083,6 @@ async function submitDailyPooja() {
   try {
     const res = await api({ action: 'register', event: 'daily-pooja', data: { ...d, date, slot } });
     if (res.success) {
-      document.getElementById('dp-upi').textContent = CONFIG.UPI_ID;
       showSuccess('dp', res.regId);
     } else {
       handleRegError('dp', res, d.flat);
@@ -1071,7 +1129,6 @@ async function submitHomam() {
   try {
     const res = await api({ action: 'register', event: 'ganapathi-homam', data: { ...d } });
     if (res.success) {
-      document.getElementById('gh-upi').textContent = CONFIG.UPI_ID;
       showSuccess('gh', res.regId);
     } else {
       handleRegError('gh', res, d.flat);
@@ -1137,7 +1194,8 @@ async function doSearch() {
       } else if (isRecvd) {
         statusHtml = `<span class="status-badge badge-received">&#10003; Payment Received</span>`;
       } else {
-        statusHtml = `<span class="status-badge badge-pending">&#9203; Payment Pending</span>`;
+        statusHtml = `<span class="status-badge badge-pending">&#9203; Payment Pending</span>
+        ${paymentNoteHtml(evCfg.amount, r.eventKey)}`;
       }
 
       const payBtnHtml = (r.paymentLink && !isFree && !isRecvd)
