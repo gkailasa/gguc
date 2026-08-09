@@ -72,6 +72,7 @@ function doPost(e) {
     let result;
     if      (action === 'register')  result = handleRegister(body);
     else if (action === 'getStatus') result = handleGetStatus(body);
+    else if (action === 'getAdmin')  result = handleGetAdmin(body);
     else                             result = { error: 'unknown_action' };
 
     cors.setContent(JSON.stringify(result));
@@ -208,6 +209,43 @@ function handleGetStatus(body) {
   results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   return { results };
+}
+
+// ─── Admin ───────────────────────────────────────────────
+
+const ADMIN_PASSWORD = 'gguc2026';
+
+function handleGetAdmin(body) {
+  if (body.password !== ADMIN_PASSWORD) return { error: 'unauthorized' };
+
+  const result = {};
+  Object.keys(EVENT_CONFIG).forEach(eventKey => {
+    try {
+      const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(eventKey);
+      if (!sheet) { result[eventKey] = { headers: [], rows: [] }; return; }
+
+      const data = sheet.getDataRange().getValues();
+      if (data.length <= 1) { result[eventKey] = { headers: [], rows: [] }; return; }
+
+      const headers = data[0].map(h => h.toString().trim());
+      const rows    = data.slice(1).map(row => {
+        const rec = {};
+        headers.forEach((h, i) => {
+          rec[h] = (row[i] instanceof Date)
+            ? row[i].toISOString()
+            : row[i].toString();
+        });
+        if (rec['Phone']) rec['Phone'] = maskPhone(rec['Phone']);
+        return rec;
+      });
+
+      result[eventKey] = { headers, rows };
+    } catch (err) {
+      result[eventKey] = { headers: [], rows: [], error: err.message };
+    }
+  });
+
+  return { data: result };
 }
 
 // ─── Helpers ─────────────────────────────────────────────────

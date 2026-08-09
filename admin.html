@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GGUC 2026 — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+<style>
+
+:root {
+  --red:   #8B1A1A;
+  --gold:  #C9A84C;
+  --bg:    #FFFBF0;
+  --dark:  #1E1408;
+  --dark2: #5C4020;
+  --muted: #9A7850;
+  --teal:  #0D3535;
+  --border: rgba(201,168,76,0.3);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--dark);
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--teal);
+  padding: 16px 24px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.header-sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(245,230,184,0.6);
+}
+.logout-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(201,168,76,0.4);
+  color: var(--gold);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 18px;
+  cursor: pointer;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.14); }
+
+/* ── Password screen ── */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
+  padding: 24px;
+}
+.login-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 4px 32px rgba(139,26,26,0.08);
+  text-align: center;
+}
+.login-card h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 6px;
+}
+.login-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.login-card input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: var(--dark);
+  background: var(--bg);
+  outline: none;
+  margin-bottom: 12px;
+  letter-spacing: 3px;
+  text-align: center;
+}
+.login-card input:focus { border-color: var(--gold); }
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.login-btn:hover { opacity: 0.9; }
+.login-btn:disabled { opacity: 0.6; cursor: default; }
+.login-error {
+  font-size: 12px;
+  color: var(--red);
+  margin-top: 10px;
+  display: none;
+}
+
+/* ── Admin screen ── */
+#admin-screen { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+.summary-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.summary-card {
+  flex: 1;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 12px rgba(139,26,26,0.06);
+}
+.summary-card .count {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--red);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.summary-card .label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.summary-card .paid {
+  font-size: 12px;
+  color: #2E7D32;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+.tab {
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s;
+}
+.tab:hover { color: var(--dark2); }
+.tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Grid.js overrides ── */
+.gridjs-wrapper { border-radius: 12px; border: 1px solid var(--border) !important; overflow: hidden; }
+.gridjs-table { font-family: 'DM Sans', sans-serif; font-size: 13px; }
+th.gridjs-th { background: var(--teal) !important; color: #fff !important; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+th.gridjs-th-sort:hover { background: #0a2b2b !important; }
+th.gridjs-th-sort .gridjs-icon { fill: rgba(255,255,255,0.6); }
+td.gridjs-td { color: var(--dark); }
+tr.gridjs-tr:hover td { background: rgba(201,168,76,0.06) !important; }
+.gridjs-search input { font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 12px; outline: none; }
+.gridjs-search input:focus { border-color: var(--gold); }
+.gridjs-footer { border-top: 1px solid var(--border) !important; }
+.gridjs-pagination button { font-family: 'DM Sans', sans-serif; }
+.gridjs-pagination button.gridjs-currentPage { background: var(--red) !important; color: #fff; border-color: var(--red) !important; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-pending  { background: #FFF3E0; color: #E65100; }
+.badge-received { background: #E8F5E9; color: #2E7D32; }
+.badge-na       { background: #E8F5E9; color: #2E7D32; }
+
+.empty-note {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--muted);
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-brand">GGUC 2026</div>
+    <div class="header-sub">Admin View</div>
+  </div>
+  <button class="logout-btn" id="logout-btn" style="display:none" onclick="logout()">Sign out</button>
+</div>
+
+<!-- Password screen -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>Admin Access</h2>
+    <p>Enter the admin password to view registrations</p>
+    <input type="password" id="pwd-input" placeholder="Password" onkeydown="if(event.key==='Enter') login()">
+    <button class="login-btn" id="login-btn" onclick="login()">Continue</button>
+    <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+  </div>
+</div>
+
+<!-- Admin screen -->
+<div id="admin-screen">
+
+  <!-- Summary cards -->
+  <div class="summary-bar" id="summary-bar"></div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Tab panels -->
+  <div id="panels"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<script>
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbxJ3O50Tcq3wFONxE5mkgLYMRGlQs3l5j8Y50LfVZXdrx_2RKgDCdANrQtDLzdNzDTa/exec';
+
+const EVENT_LABELS = {
+  'daily-pooja':     'Daily Pooja',
+  'kumkuma-pooja':   'Kumkuma Pooja',
+  'ganapathi-homam': 'Ganapathi Homam',
+};
+
+// Columns to show per event (subset of sheet columns)
+const DISPLAY_COLS = {
+  'daily-pooja':     ['Reg ID', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Timestamp'],
+  'kumkuma-pooja':   ['Reg ID', 'Name', 'Flat', 'Phone', 'Payment Status', 'Timestamp'],
+  'ganapathi-homam': ['Reg ID', 'Name', 'Flat', 'Phone', 'Payment Status', 'Timestamp'],
+};
+
+async function login() {
+  const pwd = document.getElementById('pwd-input').value.trim();
+  if (!pwd) return;
+
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getAdmin', password: pwd }),
+    });
+    const json = await res.json();
+
+    if (json.error === 'unauthorized') {
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Continue';
+      document.getElementById('pwd-input').value = '';
+      return;
+    }
+
+    showAdmin(json.data);
+  } catch (e) {
+    err.textContent = 'Network error. Please try again.';
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Continue';
+  }
+}
+
+function logout() {
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('pwd-input').value = '';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Continue';
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  if (isNaN(d)) return ts;
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function fmtEventDate(val) {
+  if (!val) return '—';
+  // YYYY-MM-DD
+  const parts = val.split('-');
+  if (parts.length === 3) {
+    const d = new Date(val);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+  }
+  return val;
+}
+
+function statusBadge(val) {
+  if (!val || val === 'N/A') return '<span class="badge badge-na">Free</span>';
+  if (val === 'Received')    return '<span class="badge badge-received">Received</span>';
+  return '<span class="badge badge-pending">Pending</span>';
+}
+
+function showAdmin(data) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'block';
+  document.getElementById('logout-btn').style.display = 'inline-block';
+
+  const summaryBar = document.getElementById('summary-bar');
+  const tabsEl     = document.getElementById('tabs');
+  const panelsEl   = document.getElementById('panels');
+
+  summaryBar.innerHTML = '';
+  tabsEl.innerHTML     = '';
+  panelsEl.innerHTML   = '';
+
+  const eventKeys = Object.keys(EVENT_LABELS);
+  let firstTab = true;
+
+  eventKeys.forEach((eventKey, idx) => {
+    const evData = data[eventKey] || { headers: [], rows: [] };
+    const rows   = evData.rows || [];
+    const total  = rows.length;
+    const paid   = rows.filter(r => r['Payment Status'] === 'Received').length;
+    const label  = EVENT_LABELS[eventKey];
+
+    // Summary card
+    const card = document.createElement('div');
+    card.className = 'summary-card';
+    card.innerHTML = `
+      <div class="count">${total}</div>
+      <div class="label">${label}</div>
+      ${total > 0 && eventKey !== 'kumkuma-pooja'
+        ? `<div class="paid">${paid} paid${total - paid > 0 ? ` &middot; ${total - paid} pending` : ''}</div>`
+        : ''}
+    `;
+    summaryBar.appendChild(card);
+
+    // Tab
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (firstTab ? ' active' : '');
+    tab.textContent = label;
+    tab.dataset.idx = idx;
+    tab.onclick = () => switchTab(idx);
+    tabsEl.appendChild(tab);
+
+    // Panel
+    const panel = document.createElement('div');
+    panel.className = 'tab-panel' + (firstTab ? ' active' : '');
+    panel.id = `panel-${idx}`;
+    panelsEl.appendChild(panel);
+
+    if (total === 0) {
+      panel.innerHTML = `<div class="empty-note">No registrations yet for ${label}.</div>`;
+    } else {
+      renderGrid(panel, eventKey, rows);
+    }
+
+    firstTab = false;
+  });
+}
+
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+}
+
+function renderGrid(container, eventKey, rows) {
+  const cols = DISPLAY_COLS[eventKey];
+
+  const columns = cols.map(col => ({
+    id:   col,
+    name: col === 'Timestamp' ? 'Registered On' : col,
+    sort: true,
+    formatter: (cell) => {
+      if (col === 'Payment Status') return gridjs.html(statusBadge(cell));
+      if (col === 'Timestamp')      return fmtDate(cell);
+      if (col === 'Date')           return fmtEventDate(cell);
+      return cell || '—';
+    },
+  }));
+
+  const tableData = rows.map(row => cols.map(col => row[col] || ''));
+
+  new gridjs.Grid({
+    columns,
+    data: tableData,
+    search: true,
+    sort: true,
+    pagination: { limit: 20 },
+    style: { table: { 'white-space': 'nowrap' } },
+  }).render(container);
+}
+
+</script>
+</body>
+</html>

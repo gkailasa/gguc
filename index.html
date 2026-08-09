@@ -219,6 +219,9 @@ body {
 .rangoli-row .shape {
   flex-shrink: 0;
   opacity: 0;
+}
+.form-progress.active .rangoli-row .shape,
+.search-loader .rangoli-row .shape {
   animation: rangoliPop 1.6s ease-in-out infinite;
 }
 .rangoli-row .shape:nth-child(1)  { animation-delay: 0s; }
@@ -271,7 +274,10 @@ body {
   height: 1px;
   margin: 6px 20% 0;
   background: linear-gradient(90deg, transparent, var(--gold), var(--saffron), var(--gold), transparent);
-  opacity: 0.4;
+  opacity: 0;
+}
+.form-progress.active .rangoli-line,
+.search-loader .rangoli-line {
   animation: linePulse 1.6s ease-in-out infinite;
 }
 @keyframes linePulse {
@@ -1267,7 +1273,8 @@ function handleRegError(pfx, res, flat) {
 /* ── Status search ───────────────────────────────────────── */
 
 async function doSearch() {
-  const q = document.getElementById('sq').value.trim();
+  const raw = document.getElementById('sq').value.trim();
+  const q   = /^\d{10}$/.test(raw) ? raw : raw.replace(/[-\s]/g, '');
   if (!q) {
     document.getElementById('status-results').innerHTML =
       '<p style="text-align:center;color:var(--red);padding:16px 0;font-weight:600">Please enter your flat number or phone number.</p>';
@@ -1275,7 +1282,16 @@ async function doSearch() {
   }
 
   const container = document.getElementById('status-results');
-  container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:24px 0">Searching…</p>';
+  container.innerHTML = `<div class="search-loader">
+    <div class="rangoli-row">
+      <span class="shape diamond"></span><span class="shape circle"></span>
+      <span class="shape petal"></span><span class="shape circle"></span>
+      <span class="shape diamond"></span><span class="shape circle"></span>
+      <span class="shape petal"></span><span class="shape circle"></span>
+      <span class="shape diamond"></span>
+    </div>
+    <span class="search-text">Searching registrations…</span>
+  </div>`;
 
   try {
     const res = await api({ action: 'getStatus', query: q });
