@@ -200,27 +200,103 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Progress bar ───────────────────────────────────────── */
+/* ── Rangoli loader ─────────────────────────────────────── */
 .form-progress {
-  height: 3px;
-  background: rgba(201,168,76,0.15);
+  display: none;
+  margin: -22px -28px 20px;
+  padding: 12px 0 8px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.06), transparent);
   border-radius: var(--r) var(--r) 0 0;
   overflow: hidden;
-  display: none;
-  margin: -26px -28px 24px;
 }
 .form-progress.active { display: block; }
-.form-progress::after {
-  content: '';
-  display: block;
-  height: 100%;
-  width: 40%;
-  background: linear-gradient(90deg, var(--gold), var(--saffron), var(--gold));
-  animation: shimmer 1.2s ease-in-out infinite;
+.rangoli-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
-@keyframes shimmer {
-  0%   { transform: translateX(-250%); }
-  100% { transform: translateX(350%); }
+.rangoli-row .shape {
+  flex-shrink: 0;
+  opacity: 0;
+  animation: rangoliPop 1.6s ease-in-out infinite;
+}
+.rangoli-row .shape:nth-child(1)  { animation-delay: 0s; }
+.rangoli-row .shape:nth-child(2)  { animation-delay: 0.12s; }
+.rangoli-row .shape:nth-child(3)  { animation-delay: 0.24s; }
+.rangoli-row .shape:nth-child(4)  { animation-delay: 0.36s; }
+.rangoli-row .shape:nth-child(5)  { animation-delay: 0.48s; }
+.rangoli-row .shape:nth-child(6)  { animation-delay: 0.60s; }
+.rangoli-row .shape:nth-child(7)  { animation-delay: 0.72s; }
+.rangoli-row .shape:nth-child(8)  { animation-delay: 0.84s; }
+.rangoli-row .shape:nth-child(9)  { animation-delay: 0.96s; }
+.rangoli-row .shape:nth-child(10) { animation-delay: 1.08s; }
+.rangoli-row .shape:nth-child(11) { animation-delay: 1.20s; }
+
+/* Diamond shape */
+.shape.diamond {
+  width: 10px; height: 10px;
+  background: var(--gold);
+  transform: rotate(45deg) scale(0);
+}
+/* Circle shape */
+.shape.circle {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--saffron);
+  transform: scale(0);
+}
+/* Star/petal shape */
+.shape.petal {
+  width: 10px; height: 10px;
+  background: var(--red);
+  border-radius: 0 50% 0 50%;
+  transform: rotate(45deg) scale(0);
+}
+
+@keyframes rangoliPop {
+  0%   { opacity: 0; transform: rotate(var(--base-rot, 0deg)) scale(0); }
+  20%  { opacity: 1; transform: rotate(var(--base-rot, 0deg)) scale(1.15); }
+  40%  { opacity: 1; transform: rotate(var(--base-rot, 0deg)) scale(0.95); }
+  60%  { opacity: 1; transform: rotate(var(--base-rot, 0deg)) scale(1); }
+  80%  { opacity: 0.4; transform: rotate(var(--base-rot, 0deg)) scale(0.5); }
+  100% { opacity: 0; transform: rotate(var(--base-rot, 0deg)) scale(0); }
+}
+.shape.diamond { --base-rot: 45deg; }
+.shape.circle  { --base-rot: 0deg; }
+.shape.petal   { --base-rot: 45deg; }
+
+/* Subtle line beneath the shapes */
+.rangoli-line {
+  height: 1px;
+  margin: 6px 20% 0;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--saffron), var(--gold), transparent);
+  opacity: 0.4;
+  animation: linePulse 1.6s ease-in-out infinite;
+}
+@keyframes linePulse {
+  0%, 100% { opacity: 0.2; }
+  50%      { opacity: 0.6; }
+}
+
+/* Status search loader */
+.search-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 0;
+  gap: 10px;
+}
+.search-loader .rangoli-row { gap: 7px; }
+.search-loader .search-text {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  animation: textPulse 1.4s ease-in-out infinite;
+}
+@keyframes textPulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
 }
 
 /* ── Animated dots ──────────────────────────────────────── */
@@ -604,7 +680,7 @@ const CONFIG = {
       name:        'Kumkuma Pooja',
       emoji:       '🔱',
       displayDate: 'Sep 18, 2026',
-      time:        '6:00 PM – 7:30 PM',
+      time:        '4:00 PM – 6:00 PM',
       place:       'Temple Garden',
       amount:      0,
       amountLabel: 'Free',
@@ -615,7 +691,7 @@ const CONFIG = {
       name:        'Ganapathi Homam',
       emoji:       '🔥',
       displayDate: 'Sep 16, 2026',
-      time:        '8:00 AM – 12:00 PM',
+      time:        '5:00 AM – 7:00 AM',
       place:       'Community Hall',
       amount:      1116,
       amountLabel: '₹1116 / family',
@@ -674,7 +750,17 @@ const CONFIG = {
 
   <div class="container">
     <div class="form-card">
-      <div class="form-progress" id="dp-progress"></div>
+      <div class="form-progress" id="dp-progress">
+        <div class="rangoli-row">
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span>
+        </div>
+        <div class="rangoli-line"></div>
+      </div>
       <div class="field">
         <label>Name <span class="req">*</span></label>
         <input type="text" id="dp-name" placeholder="Your full name">
@@ -682,7 +768,7 @@ const CONFIG = {
       <div class="two-col">
         <div class="field">
           <label>Flat Number <span class="req">*</span></label>
-          <input type="text" id="dp-flat" placeholder="e.g. A-402">
+          <input type="text" id="dp-flat" placeholder="e.g. C806">
         </div>
         <div class="field">
           <label>Phone <span class="req">*</span></label>
@@ -749,7 +835,17 @@ const CONFIG = {
 
   <div class="container">
     <div class="form-card">
-      <div class="form-progress" id="kp-progress"></div>
+      <div class="form-progress" id="kp-progress">
+        <div class="rangoli-row">
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span>
+        </div>
+        <div class="rangoli-line"></div>
+      </div>
       <div class="field">
         <label>Name <span class="req">*</span></label>
         <input type="text" id="kp-name" placeholder="Your full name">
@@ -757,7 +853,7 @@ const CONFIG = {
       <div class="two-col">
         <div class="field">
           <label>Flat Number <span class="req">*</span></label>
-          <input type="text" id="kp-flat" placeholder="e.g. A-402">
+          <input type="text" id="kp-flat" placeholder="e.g. C806">
         </div>
         <div class="field">
           <label>Phone <span class="req">*</span></label>
@@ -809,7 +905,17 @@ const CONFIG = {
 
   <div class="container">
     <div class="form-card">
-      <div class="form-progress" id="gh-progress"></div>
+      <div class="form-progress" id="gh-progress">
+        <div class="rangoli-row">
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span>
+        </div>
+        <div class="rangoli-line"></div>
+      </div>
       <div class="field">
         <label>Name <span class="req">*</span></label>
         <input type="text" id="gh-name" placeholder="Your full name">
@@ -817,7 +923,7 @@ const CONFIG = {
       <div class="two-col">
         <div class="field">
           <label>Flat Number <span class="req">*</span></label>
-          <input type="text" id="gh-flat" placeholder="e.g. A-402">
+          <input type="text" id="gh-flat" placeholder="e.g. C806">
         </div>
         <div class="field">
           <label>Phone <span class="req">*</span></label>
@@ -863,7 +969,7 @@ const CONFIG = {
       <h2>Check Your Status</h2>
       <p>Enter your flat number or phone to see all your registrations and payment status.</p>
       <div class="search-row">
-        <input type="text" id="sq" placeholder="Flat number or phone  (e.g. A-402)"
+        <input type="text" id="sq" placeholder="Flat number or phone  (e.g. C806)"
                onkeydown="if(event.key==='Enter') doSearch()">
         <button onclick="doSearch()">Search</button>
       </div>
@@ -902,8 +1008,8 @@ function nav(id) {
   document.addEventListener('touchend', function (e) {
     const dx = e.changedTouches[0].clientX - startX;
     const dy = e.changedTouches[0].clientY - startY;
-    // Right swipe: 70px+ horizontal, more horizontal than vertical, starts in left 40% of screen
-    if (dx > 70 && Math.abs(dx) > Math.abs(dy) * 1.5 && startX < window.innerWidth * 0.4) {
+    // Right swipe: 50px+ horizontal, more horizontal than vertical, starts in left 50% of screen
+    if (dx > 50 && Math.abs(dx) > Math.abs(dy) * 1.2 && startX < window.innerWidth * 0.5) {
       const active = ALL_SECTIONS.find(s =>
         document.getElementById('s-' + s).classList.contains('active'));
       if (active && active !== 'home') nav('home');
@@ -1061,7 +1167,7 @@ function collectBase(pfx) {
 
 function baseCheck(pfx, d) {
   if (!d.name)            { showError(pfx, 'Missing Name', 'Please enter your full name.'); return false; }
-  if (!validFlat(d.flat)) { showError(pfx, 'Invalid Flat', 'Please enter a valid flat number (e.g. A-402).'); return false; }
+  if (!validFlat(d.flat)) { showError(pfx, 'Invalid Flat', 'Please enter a valid flat number (e.g. C806).'); return false; }
   if (!validPhone(d.phone)) { showError(pfx, 'Invalid Phone', 'Please enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.'); return false; }
   return true;
 }
