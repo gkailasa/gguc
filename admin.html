@@ -229,6 +229,20 @@ tr.gridjs-tr:hover td { background: rgba(201,168,76,0.06) !important; }
   border-radius: 12px;
 }
 
+@media (max-width: 640px) {
+  #admin-screen { padding: 16px; }
+  .summary-card .count { font-size: 26px; }
+  .gridjs-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .gridjs-wrapper td:first-child,
+  .gridjs-wrapper th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #fff;
+  }
+  .gridjs-wrapper th:first-child { background: var(--teal) !important; }
+}
+
 </style>
 </head>
 <body>
@@ -420,6 +434,7 @@ function switchTab(idx) {
 function renderGrid(container, eventKey, rows) {
   const cols = DISPLAY_COLS[eventKey];
 
+  // ── Desktop: Grid.js table ──
   const columns = cols.map(col => ({
     id:   col,
     name: col === 'Timestamp' ? 'Registered On' : col,
@@ -442,6 +457,7 @@ function renderGrid(container, eventKey, rows) {
     pagination: { limit: 20 },
     style: { table: { 'white-space': 'nowrap' } },
   }).render(container);
+
 }
 
 </script>
