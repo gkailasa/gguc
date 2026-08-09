@@ -229,18 +229,23 @@ tr.gridjs-tr:hover td { background: rgba(201,168,76,0.06) !important; }
   border-radius: 12px;
 }
 
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+.table-scroll td:first-child,
+.table-scroll th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+}
+.table-scroll th:first-child { background: var(--teal) !important; }
+
 @media (max-width: 640px) {
   #admin-screen { padding: 16px; }
   .summary-card .count { font-size: 26px; }
-  .gridjs-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .gridjs-wrapper td:first-child,
-  .gridjs-wrapper th:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    background: #fff;
-  }
-  .gridjs-wrapper th:first-child { background: var(--teal) !important; }
 }
 
 </style>
@@ -449,6 +454,10 @@ function renderGrid(container, eventKey, rows) {
 
   const tableData = rows.map(row => cols.map(col => row[col] || ''));
 
+  const scrollWrap = document.createElement('div');
+  scrollWrap.className = 'table-scroll';
+  container.appendChild(scrollWrap);
+
   new gridjs.Grid({
     columns,
     data: tableData,
@@ -456,8 +465,7 @@ function renderGrid(container, eventKey, rows) {
     sort: true,
     pagination: { limit: 20 },
     style: { table: { 'white-space': 'nowrap' } },
-  }).render(container);
-
+  }).render(scrollWrap);
 }
 
 </script>
