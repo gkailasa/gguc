@@ -47,21 +47,22 @@ body {
   z-index: 10;
 }
 .back-btn {
-  background: none;
-  border: none;
+  background: rgba(245,230,184,0.12);
+  border: 1px solid rgba(245,230,184,0.35);
+  border-radius: 20px;
   color: var(--gold-l);
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  padding: 0;
+  padding: 6px 14px;
   display: flex;
   align-items: center;
   gap: 5px;
   flex-shrink: 0;
-  transition: opacity 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 }
-.back-btn:hover { opacity: 0.75; }
+.back-btn:hover { background: rgba(245,230,184,0.2); border-color: rgba(245,230,184,0.6); }
 .topbar-title {
   font-family: 'Cormorant Garamond', serif;
   font-size: 19px;

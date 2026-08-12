@@ -1,5 +1,5 @@
 const CONFIG = {
-  API_URL:        'https://ggucapi.giri-kailasam.workers.dev/',
+  API_URL:        'https://script.google.com/macros/s/AKfycbxJ3O50Tcq3wFONxE5mkgLYMRGlQs3l5j8Y50LfVZXdrx_2RKgDCdANrQtDLzdNzDTa/exec',
   APARTMENT_NAME: 'Greenmark Galaxy Apartments',
   UPI_ID:         'galaxyapts@icici',     // UPI ID shown on payment confirmation pages
   PAYMENT_CONTACTS: ['9966514485', '9490133404'],  // WhatsApp numbers for screenshot sharing
@@ -193,14 +193,22 @@ function renderCards() {
 
 /* ── API helper ──────────────────────────────────────────── */
 
-async function api(payload) {
-  const r = await fetch(CONFIG.API_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body:    JSON.stringify(payload),
-  });
-  if (!r.ok) throw new Error('Server error: ' + r.status);
-  return r.json();
+async function api(payload, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const r = await fetch(CONFIG.API_URL, {
+        method:   'POST',
+        headers:  { 'Content-Type': 'text/plain' },
+        body:     JSON.stringify(payload),
+        redirect: 'follow',
+      });
+      if (r.ok) return r.json();
+      if (attempt === retries) throw new Error('Server error: ' + r.status);
+    } catch (e) {
+      if (attempt === retries) throw e;
+    }
+    await new Promise(res => setTimeout(res, 800 * attempt));
+  }
 }
 
 /* ── Form state helpers ──────────────────────────────────── */
