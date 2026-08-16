@@ -24,39 +24,39 @@ const SHEET_ID = '1-P3FOKShM4aBRPqL5qAWblXbO0X6XqtB6uMRHL6-rh8'; // Paste your G
 const EVENT_CONFIG = {
   'daily-pooja': {
     name:     'Daily Pooja',
-    dateFrom: '2026-09-14',  // registration allowed from this date
-    dateTo:   '2026-09-20',  // registration allowed until this date
+    dateFrom: '2026-09-15',  // registration allowed from this date (Sep 14 blocked for sponsors)
+    dateTo:   '2026-09-24',  // registration allowed until this date
     slots:    ['Morning', 'Evening'],
-    amount:   516,
+    amount:   516,           // weekday amount; weekends (Sat/Sun) are 1116
     status:   'active',      // 'active' or 'closed'
     prefix:   'DP',
     maxPerSlot: 10,          // max registrations per date+slot; null = no limit
     blockedSlots: [
-      { date: '2026-09-14', slot: 'Morning' },  // Ganesh Chaturthi — reserved
-      { date: '2026-09-20', slot: 'Evening' },  // Closing day — reserved
+      { date: '2026-09-14', slot: 'Morning' },  // Ganesh Chaturthi — reserved for sponsors
+      { date: '2026-09-14', slot: 'Evening' },  // Ganesh Chaturthi — reserved for sponsors
     ],
   },
   'kumkuma-pooja': {
     name:             'Kumkuma Pooja',
-    amount:           0,
+    amount:           216,
     status:           'active',
     prefix:           'KP',
     maxRegistrations: null,  // null = no limit
   },
   'ganapathi-homam': {
     name:             'Ganapathi Homam',
-    amount:           1116,
+    amount:           2116,
     status:           'active',
     prefix:           'GH',
-    maxRegistrations: 5,     // total cap across all registrations
+    maxRegistrations: 10,    // total cap across all registrations
   },
 };
 
 // Columns for each sheet tab (order matters — matches the sheet headers)
 const SHEET_COLUMNS = {
-  'daily-pooja':      ['Reg ID','Timestamp','Name','Flat','Phone','Date','Slot','Payment Status','Payment Link','Payment Date'],
+  'daily-pooja':      ['Reg ID','Timestamp','Name','Flat','Phone','Date','Slot','Payment Status','Payment Date'],
   'kumkuma-pooja':    ['Reg ID','Timestamp','Name','Flat','Phone','Payment Status','Payment Date'],
-  'ganapathi-homam':  ['Reg ID','Timestamp','Name','Flat','Phone','Payment Status','Payment Link','Payment Date'],
+  'ganapathi-homam':  ['Reg ID','Timestamp','Name','Flat','Phone','Payment Status','Payment Date'],
 };
 
 // ─── Entry point ─────────────────────────────────────────────
@@ -143,14 +143,13 @@ function handleRegister(body) {
     const isBlocked = (cfg.blockedSlots || []).some(b => b.date === date && b.slot === slot);
     if (isBlocked) return { error: 'blocked', message: 'This slot is reserved and not available for registration.' };
 
-    row = [regId, now, name, flat, phone, date, slot, 'Pending', '', ''];
+    row = [regId, now, name, flat, phone, date, slot, 'Pending', ''];
 
   } else if (eventKey === 'kumkuma-pooja') {
-    row = [regId, now, name, flat, phone, 'N/A', ''];
-    // Free event — status N/A so status page shows "Free Event"
+    row = [regId, now, name, flat, phone, 'Pending', ''];
 
   } else if (eventKey === 'ganapathi-homam') {
-    row = [regId, now, name, flat, phone, 'Pending', '', ''];
+    row = [regId, now, name, flat, phone, 'Pending', ''];
   }
 
   sheet.appendRow(row);

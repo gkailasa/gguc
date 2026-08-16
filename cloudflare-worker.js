@@ -9,18 +9,18 @@ const EVENT_CONFIG = {
   'daily-pooja': {
     maxPerSlot: 10,
     blockedSlots: [
-      { date: '2026-09-14', slot: 'Morning' },
-      { date: '2026-09-20', slot: 'Evening' },
+      { date: '2026-09-14', slot: 'Morning' },  // Ganesh Chaturthi — reserved for sponsors
+      { date: '2026-09-14', slot: 'Evening' },  // Ganesh Chaturthi — reserved for sponsors
     ],
-    columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Payment Link', 'Payment Date'],
+    columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Payment Date'],
   },
   'kumkuma-pooja': {
     maxRegistrations: null,
     columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Payment Status', 'Payment Date'],
   },
   'ganapathi-homam': {
-    maxRegistrations: 5,
-    columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Payment Status', 'Payment Link', 'Payment Date'],
+    maxRegistrations: 10,
+    columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Payment Status', 'Payment Date'],
   },
 };
 
@@ -130,11 +130,11 @@ async function handleRegister(token, event, data) {
 
   let row;
   if (event === 'daily-pooja') {
-    row = [regId, timestamp, data.name, data.flat, data.phone, data.date, data.slot, 'Pending', '', ''];
+    row = [regId, timestamp, data.name, data.flat, data.phone, data.date, data.slot, 'Pending', ''];
   } else if (event === 'kumkuma-pooja') {
-    row = [regId, timestamp, data.name, data.flat, data.phone, 'Free', ''];
+    row = [regId, timestamp, data.name, data.flat, data.phone, 'Pending', ''];
   } else {
-    row = [regId, timestamp, data.name, data.flat, data.phone, 'Pending', '', ''];
+    row = [regId, timestamp, data.name, data.flat, data.phone, 'Pending', ''];
   }
 
   if (rows.length === 0) {
@@ -176,7 +176,6 @@ async function handleGetStatus(token, query) {
           date:          r[5] || '',
           slot:          r[6] || '',
           paymentStatus: r[7] || '',
-          paymentLink:   r[8] || '',
         });
       }
     }

@@ -94,7 +94,7 @@ body {
   font-weight: 700;
   white-space: nowrap;
 }
-.paid { background: rgba(232,137,28,0.12); color: var(--saffron); border: 1px solid rgba(232,137,28,0.25); }
+.paid { background: rgba(200,80,10,0.1); color: var(--saffron); border: 1px solid rgba(200,80,10,0.25); }
 .free { background: var(--green-l); color: var(--green); }
 
 /* ── Form card ──────────────────────────────────────────── */
@@ -138,7 +138,7 @@ body {
   -webkit-appearance: none;
 }
 .field select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B1A1A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A2A00' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   background-size: 12px;
@@ -150,7 +150,7 @@ body {
 .field select:focus,
 .field textarea:focus {
   border-color: var(--saffron);
-  box-shadow: 0 0 0 3px rgba(232,137,28,0.12);
+  box-shadow: 0 0 0 3px rgba(200,80,10,0.12);
   background: #fff;
 }
 .field input::placeholder,
@@ -164,7 +164,7 @@ body {
   width: 100%;
   margin-top: 22px;
   padding: 15px;
-  background: linear-gradient(135deg, var(--red), #6B1515);
+  background: linear-gradient(135deg, #C8500A, #8B3000);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -178,8 +178,8 @@ body {
   gap: 8px;
   transition: all 0.25s;
 }
-.submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139,26,26,0.25); }
-.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+.submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(200,80,10,0.4); }
+.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
 
 /* ── Spinner ────────────────────────────────────────────── */
 .spinner {
@@ -198,7 +198,7 @@ body {
   display: none;
   margin: -22px -28px 20px;
   padding: 12px 0 8px;
-  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(240,165,0,0.06), transparent);
   border-radius: var(--r) var(--r) 0 0;
   overflow: hidden;
 }
@@ -267,6 +267,7 @@ body {
   height: 1px;
   margin: 6px 20% 0;
   background: linear-gradient(90deg, transparent, var(--gold), var(--saffron), var(--gold), transparent);
+
   opacity: 0;
 }
 .form-progress.active .rangoli-line,
@@ -348,8 +349,8 @@ body {
 .payment-note {
   margin-top: 14px;
   padding: 14px 16px;
-  background: rgba(201,168,76,0.1);
-  border: 1px solid rgba(201,168,76,0.3);
+  background: rgba(240,165,0,0.08);
+  border: 1px solid rgba(240,165,0,0.25);
   border-radius: 10px;
   font-size: 13px;
   color: var(--dark2);
@@ -445,24 +446,23 @@ body {
   background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--r);
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 12px rgba(30,20,8,0.07);
   overflow: hidden;
   transition: transform 0.25s, box-shadow 0.25s;
 }
-.event-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(139,26,26,0.1); }
+.event-card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(30,20,8,0.13); }
 
-.card-top-bar { height: 3px; background: linear-gradient(90deg, var(--saffron), var(--gold), #D4880A); }
-.card-body { padding: 20px 22px; }
+.card-top-bar { height: 5px; }
+.card-body { padding: 22px 24px; }
 
 .card-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 11px;
+  margin-bottom: 13px;
 }
-.card-name { display: flex; align-items: center; gap: 10px; }
-.card-emoji { font-size: 26px; line-height: 1; }
+.card-name { display: flex; align-items: center; gap: 12px; }
 .card-name h2 {
   font-family: 'Cormorant Garamond', serif;
   font-size: 22px;
@@ -476,29 +476,28 @@ body {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
+  border: 1px solid transparent;
 }
-.card-amt.paid { background: rgba(232,137,28,0.1); color: var(--saffron); border: 1px solid rgba(232,137,28,0.2); }
-.card-amt.free { background: var(--green-l); color: var(--green); }
 .card-amt.closed { background: #f5f5f5; color: #999; }
 
 .card-info {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 16px;
-  margin-bottom: 11px;
+  margin-bottom: 12px;
 }
 .card-info span { font-size: 13px; color: var(--muted); }
 .card-desc {
   font-size: 14px;
   color: var(--dark2);
   line-height: 1.65;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .card-actions { display: flex; gap: 9px; }
 .card-btn {
   flex: 1;
-  padding: 11px 14px;
+  padding: 13px 14px;
   border-radius: 9px;
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
@@ -507,9 +506,10 @@ body {
   cursor: pointer;
   text-align: center;
   transition: all 0.2s;
+  letter-spacing: 0.2px;
 }
-.card-btn-primary { background: linear-gradient(135deg, var(--red), #6B1515); color: #fff; }
-.card-btn-primary:hover { box-shadow: 0 6px 20px rgba(139,26,26,0.22); transform: translateY(-1px); }
+.card-btn-primary { color: #fff; }
+.card-btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
 .card-btn-disabled { background: #f2f2f2; color: #aaa; cursor: not-allowed; }
 
 /* Footer */
@@ -562,12 +562,12 @@ body {
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.search-row input:focus { border-color: var(--saffron); box-shadow: 0 0 0 3px rgba(232,137,28,0.12); }
+.search-row input:focus { border-color: var(--saffron); box-shadow: 0 0 0 3px rgba(200,80,10,0.12); }
 .search-row input::placeholder { color: #C4A882; }
 .search-row button {
   padding: 12px 20px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--red), #6B1515);
+  background: linear-gradient(135deg, #C8500A, #8B3000);
   color: #fff;
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
