@@ -73,13 +73,18 @@ function clearResults(pfx) {
   });
 }
 
-function showSuccess(pfx, regId) {
+function showSuccess(pfx, regId, name) {
   clearResults(pfx);
   const el = document.getElementById(pfx + '-success');
   el.classList.add('show');
+  const h3 = el.querySelector('h3');
+  if (h3) h3.textContent = name ? `Welcome, ${name}! Thank you for registering.` : 'Registration Confirmed';
+  const p = el.querySelector('p');
+  if (p) p.style.display = 'none';
   const badge = document.getElementById(pfx + '-reg-id');
   if (badge) badge.textContent = 'Registration ID: ' + regId;
   document.getElementById(pfx + '-submit').style.display = 'none';
+  setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
 function showError(pfx, title, msg) {
@@ -126,7 +131,7 @@ async function submitDailyPooja() {
     const res = await api({ action: 'register', event: 'daily-pooja', data: { ...d, date, slot } });
     if (res.success) {
       document.getElementById('dp-payment-note').innerHTML = paymentNoteHtml(getDpAmount(date), 'daily-pooja', d.flat);
-      showSuccess('dp', res.regId);
+      showSuccess('dp', res.regId, d.name);
     } else {
       handleRegError('dp', res, d.flat);
     }
@@ -150,7 +155,7 @@ async function submitKumkuma() {
     const res = await api({ action: 'register', event: 'kumkuma-pooja', data: { ...d } });
     if (res.success) {
       document.getElementById('kp-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['kumkuma-pooja'].amount, 'kumkuma-pooja', d.flat);
-      showSuccess('kp', res.regId);
+      showSuccess('kp', res.regId, d.name);
     } else {
       handleRegError('kp', res, d.flat);
     }
@@ -174,7 +179,7 @@ async function submitHomam() {
     const res = await api({ action: 'register', event: 'ganapathi-homam', data: { ...d } });
     if (res.success) {
       document.getElementById('gh-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['ganapathi-homam'].amount, 'ganapathi-homam', d.flat);
-      showSuccess('gh', res.regId);
+      showSuccess('gh', res.regId, d.name);
     } else {
       handleRegError('gh', res, d.flat);
     }

@@ -166,6 +166,7 @@ async function handleGetStatus(token, query) {
       const matchFlat  = r[3]?.toLowerCase() === query.toLowerCase();
       const matchPhone = r[4] === query;
       if (isPhone ? matchPhone : matchFlat) {
+        const isDP = event === 'daily-pooja';
         results.push({
           eventKey:      event,
           regId:         r[0] || '',
@@ -173,9 +174,9 @@ async function handleGetStatus(token, query) {
           name:          r[2] || '',
           flat:          r[3] || '',
           phone:         r[4] || '',
-          date:          r[5] || '',
-          slot:          r[6] || '',
-          paymentStatus: r[7] || '',
+          date:          isDP ? (r[5] || '') : '',
+          slot:          isDP ? (r[6] || '') : '',
+          paymentStatus: isDP ? (r[7] || '') : (r[5] || ''),
         });
       }
     }

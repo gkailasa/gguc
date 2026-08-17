@@ -101,7 +101,7 @@ async function doSearch() {
         statusHtml = `<span class="status-badge badge-received">&#10003; Payment Received</span>`;
       } else {
         statusHtml = `<span class="status-badge badge-pending">&#9203; Payment Pending</span>
-        ${paymentNoteHtml(evAmount, r.eventKey, r.flat)}`;
+        ${paymentNoteHtml(evAmount, r.eventKey, r.flat, true)}`;
       }
 
       const slotHtml = r.slot

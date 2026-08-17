@@ -328,7 +328,7 @@ body {
   font-weight: 700;
   margin-bottom: 6px;
 }
-.result-success h3 { color: var(--green); }
+.result-success h3 { color: var(--green); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; }
 .result-error h3   { color: #BF360C; }
 .result-box p { font-size: 14px; color: var(--dark2); line-height: 1.7; }
 .result-box p + p { margin-top: 5px; }
@@ -357,6 +357,98 @@ body {
   line-height: 1.8;
 }
 .payment-note strong { color: var(--dark); }
+
+/* ── Next steps (post-registration) ────────────────────── */
+.next-steps {
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.next-steps-title {
+  background: rgba(232,137,28,0.07);
+  border-bottom: 1px solid rgba(201,168,76,0.25);
+  padding: 9px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.next-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--saffron);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.step-label {
+  font-size: 14px;
+  color: var(--dark);
+  line-height: 1.4;
+}
+.step-pay-btn {
+  align-self: flex-start;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.step-pay-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.step-wa-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.step-wa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #25D366;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 20px;
+  text-decoration: none;
+  line-height: 1;
+  transition: all 0.2s;
+}
+.step-wa-btn:hover { background: #1ebe5a; transform: translateY(-1px); }
+.check-status-link {
+  display: block;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--red);
+  text-decoration: none;
+  text-align: center;
+}
+.check-status-link:hover { text-decoration: underline; }
 
 .status-link-btn {
   display: inline-flex;
