@@ -107,7 +107,7 @@ function openPayModal(amount, eventKey, flat) {
   ).join('');
 
   const qrEl = document.getElementById('pay-modal-qr');
-  qrEl.innerHTML = '<img src="galaxy_cultural_qr.png" width="240" height="240" style="border-radius:8px;display:block;" alt="UPI QR Code">';
+  qrEl.innerHTML = '<img src="galaxy_cultural_qr.jpg" width="240" height="240" style="border-radius:8px;display:block;" alt="UPI QR Code">';
 
   document.getElementById('pay-modal-backdrop').style.display = 'block';
   const modal = document.getElementById('pay-modal');
@@ -147,7 +147,7 @@ function paymentNoteHtml(amount, eventKey, flat, hideStatusLink) {
     `<a href="https://wa.me/91${c.number}?text=${waMsg}" target="_blank" class="step-wa-btn">${waIcon} ${c.name} · ${c.number}</a>`
   ).join('');
   return `<div class="next-steps">
-  <div class="next-steps-title">2 steps to complete your booking</div>
+  <div class="next-steps-title">Final Step to confirm your Registration</div>
   <div class="next-step">
     <div class="step-num">1</div>
     <div class="step-content">
