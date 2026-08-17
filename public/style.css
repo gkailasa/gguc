@@ -729,6 +729,25 @@ body {
 }
 .pay-btn:hover { box-shadow: 0 6px 20px rgba(232,137,28,0.28); transform: translateY(-1px); }
 
+/* ── UPI app selector buttons ── */
+.pay-app-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 12px 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.pay-app-btn:active { transform: scale(0.93); border-color: #C9A84C; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+@media (hover: hover) {
+  .pay-app-btn:hover { border-color: #C9A84C; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+}
+.pay-app-btn img { display: block; }
+
 /* ── Payment modal slide-up ── */
 #pay-modal {
   transition: transform 0.3s ease, opacity 0.3s ease;

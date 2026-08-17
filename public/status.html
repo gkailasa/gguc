@@ -6,6 +6,11 @@
 <title>Registration Status — Greenmark Galaxy</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="preload" href="galaxy_cultural_qr.png" as="image">
+<link rel="preload" href="icons/gpay.svg" as="image" type="image/svg+xml">
+<link rel="preload" href="icons/phonepay.svg" as="image" type="image/svg+xml">
+<link rel="preload" href="icons/paytm.svg" as="image" type="image/svg+xml">
+<link rel="preload" href="icons/Bhim.svg" as="image" type="image/svg+xml">
 </head>
 <body>
 <div class="page-bar"></div>
@@ -42,7 +47,7 @@
   </div>
   <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#1E1408;text-align:center;margin-bottom:4px;" id="pay-modal-title">Pay via UPI</p>
   <p style="font-size:13px;color:#9A7850;text-align:center;margin-bottom:20px;" id="pay-modal-sub"></p>
-  <a id="pay-modal-btn" href="#" onclick="closePayModal()" style="display:block;background:#8B1A1A;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:12px;text-align:center;text-decoration:none;margin-bottom:20px;">Open UPI App to Pay</a>
+  <div id="pay-modal-btns" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;"></div>
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
     <div style="flex:1;height:1px;background:rgba(201,168,76,0.3);"></div>
     <span style="font-size:11px;color:#9A7850;font-weight:600;letter-spacing:1px;">OR SCAN QR &amp; ENTER AMOUNT</span>

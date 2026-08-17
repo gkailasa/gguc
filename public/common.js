@@ -87,13 +87,24 @@ function paymentContactsHtml(style) {
 function openPayModal(amount, eventKey, flat) {
   const evCfg   = CONFIG.events[eventKey] || {};
   const note    = flat ? `${evCfg.name || eventKey} - Flat ${flat}` : (evCfg.name || eventKey);
-  const upiEnc  = s => encodeURIComponent(s).replace(/%20/g, '+');
-  const upiLink = `upi://pay?pa=${upiEnc(CONFIG.UPI_ID)}&pn=${upiEnc(CONFIG.APARTMENT_NAME)}&am=${amount}&cu=INR&tn=${upiEnc(note)}`;
+  const upiEnc   = s => encodeURIComponent(s).replace(/%20/g, '+');
+  const upiQuery = `pa=${upiEnc(CONFIG.UPI_ID)}&pn=${upiEnc(CONFIG.APARTMENT_NAME)}&am=${amount}&cu=INR&tn=${upiEnc(note)}`;
 
   document.getElementById('pay-modal-title').textContent = `Pay \u20B9${amount}`;
   document.getElementById('pay-modal-sub').textContent   = evCfg.name || '';
-  document.getElementById('pay-modal-btn').href          = upiLink;
   document.getElementById('pay-modal-upi').textContent   = CONFIG.UPI_ID;
+
+  const payApps = [
+    { name: 'GPay',     href: `tez://upi/pay?${upiQuery}`,  icon: 'icons/gpay.svg' },
+    { name: 'PhonePe',  href: `phonepe://pay?${upiQuery}`,   icon: 'icons/phonepay.svg' },
+    { name: 'Paytm',    href: `paytmmp://pay?${upiQuery}`,   icon: 'icons/paytm.svg' },
+    { name: 'BHIM',     href: `upi://pay?${upiQuery}`,       icon: 'icons/Bhim.svg' },
+  ];
+  document.getElementById('pay-modal-btns').innerHTML = payApps.map(app =>
+    `<a href="${app.href}" onclick="closePayModal()" class="pay-app-btn" title="${app.name}">
+      <img src="${app.icon}" width="36" height="36">
+    </a>`
+  ).join('');
 
   const qrEl = document.getElementById('pay-modal-qr');
   qrEl.innerHTML = '<img src="galaxy_cultural_qr.png" width="240" height="240" style="border-radius:8px;display:block;" alt="UPI QR Code">';
@@ -147,7 +158,7 @@ function paymentNoteHtml(amount, eventKey, flat, hideStatusLink) {
   <div class="next-step">
     <div class="step-num">2</div>
     <div class="step-content">
-      <div class="step-label">Once paid, send the payment screenshot on WhatsApp to either of the numbers below.</div>
+      <div class="step-label">Once paid, send the payment screenshot to either of the numbers below.</div>
       <div class="step-wa-btns">${waButtons}</div>
     </div>
   </div>
