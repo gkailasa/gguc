@@ -152,7 +152,8 @@ async function submitKumkuma() {
 
   setLoading('kp', true);
   try {
-    const res = await api({ action: 'register', event: 'kumkuma-pooja', data: { ...d } });
+    const kpCfg = CONFIG.events['kumkuma-pooja'];
+    const res = await api({ action: 'register', event: 'kumkuma-pooja', data: { ...d, date: kpCfg.date, slot: kpCfg.slot } });
     if (res.success) {
       document.getElementById('kp-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['kumkuma-pooja'].amount, 'kumkuma-pooja', d.flat);
       showSuccess('kp', res.regId, d.name);
@@ -176,7 +177,8 @@ async function submitHomam() {
 
   setLoading('gh', true);
   try {
-    const res = await api({ action: 'register', event: 'ganapathi-homam', data: { ...d } });
+    const ghCfg = CONFIG.events['ganapathi-homam'];
+    const res = await api({ action: 'register', event: 'ganapathi-homam', data: { ...d, date: ghCfg.date, slot: ghCfg.slot } });
     if (res.success) {
       document.getElementById('gh-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['ganapathi-homam'].amount, 'ganapathi-homam', d.flat);
       showSuccess('gh', res.regId, d.name);
@@ -201,7 +203,7 @@ function handleRegError(pfx, res, flat) {
   } else if (res.error === 'closed') {
     showError(pfx, 'Registrations Closed', 'Registrations for this event are currently closed.');
   } else if (res.error === 'full') {
-    showError(pfx, 'Slots Full', 'All spots for this event/slot are filled. Please contact the committee.');
+    showError(pfx, 'Slots Full', 'All slots for this event/slot are filled. Please contact the committee.');
   } else {
     showError(pfx, 'Something went wrong', res.message || 'Please try again or contact the committee.');
   }

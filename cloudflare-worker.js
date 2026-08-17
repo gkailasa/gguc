@@ -5,6 +5,9 @@ const SCOPES   = 'https://www.googleapis.com/auth/spreadsheets';
 let cachedToken = null;
 let tokenExpiry = 0;
 
+// Uniform columns for all events: Date and Slot are '' for events that don't use them
+const COLUMNS = ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Payment Date'];
+
 const EVENT_CONFIG = {
   'daily-pooja': {
     maxPerSlot: 10,
@@ -12,15 +15,12 @@ const EVENT_CONFIG = {
       { date: '2026-09-14', slot: 'Morning' },  // Ganesh Chaturthi — reserved for sponsors
       { date: '2026-09-14', slot: 'Evening' },  // Ganesh Chaturthi — reserved for sponsors
     ],
-    columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Payment Date'],
   },
   'kumkuma-pooja': {
     maxRegistrations: null,
-    columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Payment Status', 'Payment Date'],
   },
   'ganapathi-homam': {
     maxRegistrations: 10,
-    columns: ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Payment Status', 'Payment Date'],
   },
 };
 
@@ -103,20 +103,25 @@ async function handleRegister(token, event, data) {
 
   const dataRows = rows.slice(1); // skip header row
 
-  if (event === 'daily-pooja') {
+  // Destructure with explicit defaults — date and slot are '' for events that don't use them
+  const { name, flat, phone, date = '', slot = '' } = data;
+
+  if (cfg.maxPerSlot) {
+    // Slot-based event (daily-pooja): duplicate = same flat + date + slot
     const dup = dataRows.find(r =>
-      r[3]?.toLowerCase() === data.flat?.toLowerCase() &&
-      r[5] === data.date && r[6] === data.slot
+      r[3]?.toLowerCase() === flat?.toLowerCase() &&
+      r[5] === date && r[6] === slot
     );
     if (dup) return { success: false, error: 'duplicate' };
 
-    const blocked = (cfg.blockedSlots || []).find(b => b.date === data.date && b.slot === data.slot);
+    const blocked = (cfg.blockedSlots || []).find(b => b.date === date && b.slot === slot);
     if (blocked) return { success: false, error: 'blocked', message: 'This slot is reserved.' };
 
-    const slotCount = dataRows.filter(r => r[5] === data.date && r[6] === data.slot).length;
+    const slotCount = dataRows.filter(r => r[5] === date && r[6] === slot).length;
     if (slotCount >= cfg.maxPerSlot) return { success: false, error: 'full' };
   } else {
-    const dup = dataRows.find(r => r[3]?.toLowerCase() === data.flat?.toLowerCase());
+    // Non-slot event: duplicate = same flat
+    const dup = dataRows.find(r => r[3]?.toLowerCase() === flat?.toLowerCase());
     if (dup) return { success: false, error: 'duplicate' };
 
     if (cfg.maxRegistrations !== null && dataRows.length >= cfg.maxRegistrations) {
@@ -127,18 +132,10 @@ async function handleRegister(token, event, data) {
   const prefix  = { 'daily-pooja': 'DP', 'kumkuma-pooja': 'KP', 'ganapathi-homam': 'GH' }[event] || 'XX';
   const regId   = prefix + Date.now().toString(36).toUpperCase();
   const timestamp = new Date().toISOString();
-
-  let row;
-  if (event === 'daily-pooja') {
-    row = [regId, timestamp, data.name, data.flat, data.phone, data.date, data.slot, 'Pending', ''];
-  } else if (event === 'kumkuma-pooja') {
-    row = [regId, timestamp, data.name, data.flat, data.phone, 'Pending', ''];
-  } else {
-    row = [regId, timestamp, data.name, data.flat, data.phone, 'Pending', ''];
-  }
+  const row = [regId, timestamp, name, flat, phone, date, slot, 'Pending', ''];
 
   if (rows.length === 0) {
-    await sheetsAppend(token, `${event}!A1`, [cfg.columns]);
+    await sheetsAppend(token, `${event}!A1`, [COLUMNS]);
   }
 
   await sheetsAppend(token, `${event}!A:J`, [row]);
@@ -166,7 +163,6 @@ async function handleGetStatus(token, query) {
       const matchFlat  = r[3]?.toLowerCase() === query.toLowerCase();
       const matchPhone = r[4] === query;
       if (isPhone ? matchPhone : matchFlat) {
-        const isDP = event === 'daily-pooja';
         results.push({
           eventKey:      event,
           regId:         r[0] || '',
@@ -174,9 +170,9 @@ async function handleGetStatus(token, query) {
           name:          r[2] || '',
           flat:          r[3] || '',
           phone:         r[4] || '',
-          date:          isDP ? (r[5] || '') : '',
-          slot:          isDP ? (r[6] || '') : '',
-          paymentStatus: isDP ? (r[7] || '') : (r[5] || ''),
+          date:          r[5] || '',
+          slot:          r[6] || '',
+          paymentStatus: r[7] || '',
         });
       }
     }

@@ -26,6 +26,8 @@ const CONFIG = {
       name:        'Kumkuma Pooja',
       emoji:       '🔱',
       displayDate: 'Sep 18, 2026',
+      date:        '2026-09-18',
+      slot:        'Evening',
       time:        '4:00 PM – 6:00 PM',
       place:       'Ganapathi Mandapam',
       amount:      216,
@@ -37,6 +39,8 @@ const CONFIG = {
       name:        'Ganapathi Homam',
       emoji:       '🔥',
       displayDate: 'Sep 16, 2026',
+      date:        '2026-09-16',
+      slot:        'Morning',
       time:        '5:30 AM – 7:30 AM',
       place:       'Ganapathi Mandapam',
       amount:      2116,
@@ -77,12 +81,6 @@ function fmtDate(ts) {
 
 /* ── Payment helpers ─────────────────────────────────────── */
 
-function paymentContactsHtml(style) {
-  const s = style || '';
-  return CONFIG.PAYMENT_CONTACTS
-    .map(c => `<strong ${s}>${c.name} (${c.number})</strong>`)
-    .join(' or ');
-}
 
 function openPayModal(amount, eventKey, flat) {
   const evCfg   = CONFIG.events[eventKey] || {};
