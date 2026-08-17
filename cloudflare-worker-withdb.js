@@ -1,21 +1,18 @@
 const SHEET_ID = '1-P3FOKShM4aBRPqL5qAWblXbO0X6XqtB6uMRHL6-rh8';
 const SCOPES   = 'https://www.googleapis.com/auth/spreadsheets';
 
-// Set to false to disable token caching (always fetches a fresh token)
-const TOKEN_CACHE_ENABLED = true;
-
+// In-memory token cache across requests on the same instance
 let cachedToken = null;
-let tokenExpiry  = 0;
+let tokenExpiry = 0;
 
-// Uniform columns for all events: Date and Slot are '' for events that don't use them
 const COLUMNS = ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Payment Date'];
 
 const EVENT_CONFIG = {
   'daily-pooja': {
     maxPerSlot: 10,
     blockedSlots: [
-      { date: '2026-09-14', slot: 'Morning' },  // Ganesh Chaturthi — reserved for sponsors
-      { date: '2026-09-14', slot: 'Evening' },  // Ganesh Chaturthi — reserved for sponsors
+      { date: '2026-09-14', slot: 'Morning' },
+      { date: '2026-09-14', slot: 'Evening' },
     ],
   },
   'kumkuma-pooja': {
@@ -26,11 +23,11 @@ const EVENT_CONFIG = {
   },
 };
 
-/* ── Google Auth ─────────────────────────────────────────── */
+/* ── Google Auth (Fixed Token Caching) ───────────────────── */
 
 async function getAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1000);
-  if (TOKEN_CACHE_ENABLED && cachedToken && tokenExpiry > now + 60) {
+  if (cachedToken && tokenExpiry > now + 60) {
     return cachedToken;
   }
 
@@ -72,11 +69,10 @@ async function getAccessToken(serviceAccount) {
   });
   const data = await res.json();
   if (!data.access_token) throw new Error('Auth failed: ' + JSON.stringify(data));
-  if (TOKEN_CACHE_ENABLED) {
-    cachedToken = data.access_token;
-    tokenExpiry  = now + (data.expires_in || 3600);
-  }
-  return data.access_token;
+  
+  cachedToken = data.access_token;
+  tokenExpiry = now + (data.expires_in || 3600);
+  return cachedToken;
 }
 
 /* ── Sheets helpers ──────────────────────────────────────── */
@@ -99,96 +95,107 @@ async function sheetsAppend(token, range, values) {
   return res.json();
 }
 
-/* ── Register ────────────────────────────────────────────── */
+async function syncToSheetsBackground(env, event, row) {
+  try {
+    const serviceAccount = JSON.parse(env.SERVICE_ACCOUNT_JSON);
+    const token = await getAccessToken(serviceAccount);
 
-async function handleRegister(token, event, data) {
+    // Check if the tab exists and has a header row; initialize if not
+    let existing = [];
+    try {
+      const res = await sheetsGet(token, `${event}!A1:A1`);
+      existing = res.values || [];
+    } catch(e) {}
+
+    if (existing.length === 0) {
+      await sheetsAppend(token, `${event}!A1`, [COLUMNS]);
+    }
+
+    await sheetsAppend(token, `${event}!A:J`, [row]);
+  } catch (err) {
+    console.error('Background Sheets sync failed:', err.message);
+  }
+}
+
+/* ── Register Handler ────────────────────────────────────── */
+
+async function handleRegister(db, event, data, env, ctx) {
   const cfg = EVENT_CONFIG[event];
   if (!cfg) return { success: false, error: 'unknown_event' };
 
-  let rows = [];
-  try {
-    const res = await sheetsGet(token, `${event}!A:J`);
-    rows = res.values || [];
-  } catch(e) {}
-
-  const dataRows = rows.slice(1); // skip header row
-
-  // Destructure with explicit defaults — date and slot are '' for events that don't use them
   const { name, flat, phone, date = '', slot = '' } = data;
+  const normalizedFlat = flat ? flat.trim().toLowerCase() : '';
 
   if (cfg.maxPerSlot) {
-    // Slot-based event (daily-pooja): duplicate = same flat + date + slot
-    const dup = dataRows.find(r =>
-      r[3]?.toLowerCase() === flat?.toLowerCase() &&
-      r[5] === date && r[6] === slot
-    );
-    if (dup) return { success: false, error: 'duplicate' };
-
+    // Check blocked slots
     const blocked = (cfg.blockedSlots || []).find(b => b.date === date && b.slot === slot);
     if (blocked) return { success: false, error: 'blocked', message: 'This slot is reserved.' };
 
-    const slotCount = dataRows.filter(r => r[5] === date && r[6] === slot).length;
-    if (slotCount >= cfg.maxPerSlot) return { success: false, error: 'full' };
-  } else {
-    // Non-slot event: duplicate = same flat
-    const dup = dataRows.find(r => r[3]?.toLowerCase() === flat?.toLowerCase());
+    // Check duplicate in D1
+    const dup = await db.prepare(
+      `SELECT id FROM registrations WHERE event_key = ? AND LOWER(flat) = ? AND event_date = ? AND slot = ? LIMIT 1`
+    ).bind(event, normalizedFlat, date, slot).first();
     if (dup) return { success: false, error: 'duplicate' };
 
-    if (cfg.maxRegistrations !== null && dataRows.length >= cfg.maxRegistrations) {
-      return { success: false, error: 'full' };
+    // Check capacity in D1
+    const countRes = await db.prepare(
+      `SELECT COUNT(*) as count FROM registrations WHERE event_key = ? AND event_date = ? AND slot = ?`
+    ).bind(event, date, slot).first();
+    if (countRes.count >= cfg.maxPerSlot) return { success: false, error: 'full' };
+  } else {
+    // Non-slot event duplicate check
+    const dup = await db.prepare(
+      `SELECT id FROM registrations WHERE event_key = ? AND LOWER(flat) = ? LIMIT 1`
+    ).bind(event, normalizedFlat).first();
+    if (dup) return { success: false, error: 'duplicate' };
+
+    if (cfg.maxRegistrations !== null) {
+      const countRes = await db.prepare(
+        `SELECT COUNT(*) as count FROM registrations WHERE event_key = ?`
+      ).bind(event).first();
+      if (countRes.count >= cfg.maxRegistrations) return { success: false, error: 'full' };
     }
   }
 
-  const prefix  = { 'daily-pooja': 'DP', 'kumkuma-pooja': 'KP', 'ganapathi-homam': 'GH' }[event] || 'XX';
-  const regId   = prefix + Date.now().toString(36).toUpperCase();
+  const prefix = { 'daily-pooja': 'DP', 'kumkuma-pooja': 'KP', 'ganapathi-homam': 'GH' }[event] || 'XX';
+  const regId = prefix + Date.now().toString(36).toUpperCase();
   const timestamp = new Date().toISOString();
   const row = [regId, timestamp, name, flat, phone, date, slot, 'Pending', ''];
 
-  if (rows.length === 0) {
-    await sheetsAppend(token, `${event}!A1`, [COLUMNS]);
-  }
+  // Direct insert to D1 (Instant write)
+  await db.prepare(
+    `INSERT INTO registrations (id, event_key, timestamp, name, flat, phone, event_date, slot, payment_status, payment_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(regId, event, timestamp, name, flat, phone, date, slot, 'Pending', '').run();
 
-  await sheetsAppend(token, `${event}!A:J`, [row]);
+  // Async non-blocking push to Google Sheets
+  ctx.waitUntil(syncToSheetsBackground(env, event, row));
+
   return { success: true, regId };
 }
 
-/* ── Get Status ──────────────────────────────────────────── */
+/* ── Get Status Handler ──────────────────────────────────── */
 
-async function handleGetStatus(token, query) {
-  const events  = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
-  const isPhone = /^\d{10}$/.test(query);
+async function handleGetStatus(db, query) {
+  const normalizedQuery = query.trim().toLowerCase();
+  
+  const { results } = await db.prepare(
+    `SELECT * FROM registrations WHERE LOWER(flat) = ? OR phone = ?`
+  ).bind(normalizedQuery, query.trim()).all();
 
-  const sheets = await Promise.all(events.map(async event => {
-    try {
-      const res = await sheetsGet(token, `${event}!A:J`);
-      return { event, rows: (res.values || []).slice(1) };
-    } catch(e) {
-      return { event, rows: [] };
-    }
+  const formattedResults = (results || []).map(r => ({
+    eventKey:      r.event_key,
+    regId:         r.id,
+    timestamp:     r.timestamp,
+    name:          r.name,
+    flat:          r.flat,
+    phone:         r.phone,
+    date:          r.event_date,
+    slot:          r.slot,
+    paymentStatus: r.payment_status,
   }));
 
-  const results = [];
-  for (const { event, rows } of sheets) {
-    for (const r of rows) {
-      const matchFlat  = r[3]?.toLowerCase() === query.toLowerCase();
-      const matchPhone = r[4] === query;
-      if (isPhone ? matchPhone : matchFlat) {
-        results.push({
-          eventKey:      event,
-          regId:         r[0] || '',
-          timestamp:     r[1] || '',
-          name:          r[2] || '',
-          flat:          r[3] || '',
-          phone:         r[4] || '',
-          date:          r[5] || '',
-          slot:          r[6] || '',
-          paymentStatus: r[7] || '',
-        });
-      }
-    }
-  }
-
-  return { results };
+  return { results: formattedResults };
 }
 
 /* ── CORS headers ────────────────────────────────────────── */
@@ -201,25 +208,23 @@ function cors() {
   };
 }
 
-/* ── Main handler ────────────────────────────────────────── */
+/* ── Main Handler ────────────────────────────────────────── */
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: cors() });
     }
 
     try {
-      const serviceAccount = JSON.parse(env.SERVICE_ACCOUNT_JSON);
-      const token  = await getAccessToken(serviceAccount);
-      const body   = await request.json();
+      const body = await request.json();
       const { action, event, data, query } = body;
 
       let result;
       if (action === 'register') {
-        result = await handleRegister(token, event, data);
+        result = await handleRegister(env.DB, event, data, env, ctx);
       } else if (action === 'getStatus') {
-        result = await handleGetStatus(token, query);
+        result = await handleGetStatus(env.DB, query);
       } else {
         result = { error: 'unknown action' };
       }

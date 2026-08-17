@@ -81,7 +81,7 @@ async function doSearch() {
   </div>`;
 
   try {
-    const res = await api({ action: 'getStatus', query: q });
+    const res = await adminApi({ action: 'getStatus', query: q });
 
     if (!res.results || res.results.length === 0) {
       container.innerHTML = `

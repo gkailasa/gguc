@@ -1,5 +1,11 @@
 const CONFIG = {
-  API_URL:          'https://ggucapi.giri-kailasam.workers.dev/',
+  // Registration worker (validate + insert):
+  //   Sheets-only: 'https://ggucapi.giri-kailasam.workers.dev/'
+  //   D1+Sheets:   'https://gguc2026e.giri-kailasam.workers.dev/'
+  API_URL:          'https://gguc2026e.giri-kailasam.workers.dev/',
+
+  // Admin worker (search + updatePayment): set URL once deployed
+  ADMIN_API_URL:    'https://ggucadmin.giri-kailasam.workers.dev/',
   APARTMENT_NAME:   'Greenmark Galaxy Apartments',
   UPI_ID:           'galaxyapts@icici',
   PAYMENT_CONTACTS: [
@@ -62,6 +68,16 @@ function getDpAmount(dateStr) {
 
 async function api(payload) {
   const r = await fetch(CONFIG.API_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body:    JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error('Server error: ' + r.status);
+  return r.json();
+}
+
+async function adminApi(payload) {
+  const r = await fetch(CONFIG.ADMIN_API_URL, {
     method:  'POST',
     headers: { 'Content-Type': 'text/plain' },
     body:    JSON.stringify(payload),
