@@ -1,32 +1,16 @@
-  {                                                                                                                                                                                                              
-    "hosting": {                                                                                                                                                                                               
-      "public": ".",                                                                                                                                                                                             
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        ".git/**",
-        ".github/**",
-        "**/node_modules/**",
-        "node_modules",
-        "src/**",
-        "cloudflare-worker.js",
-        "test-sheets.js",
-        "package.json",
-        "package-lock.json",
-        "CLAUDE.md",
-        "README.md"
-      ],                                                                                                                                              
-      "rewrites": [
-        {
-          "source": "/admin",
-          "destination": "/admin.html"
-        },
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ]
-    }
+{
+  "hosting": {
+    "public": "public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/admin",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
   }
-
-
+}
