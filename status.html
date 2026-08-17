@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Registration Status — Greenmark Galaxy</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page-bar"></div>
+
+<div id="s-status" class="section active">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="window.location.href='index.html'">&#8592; Back</button>
+    <span class="topbar-title">Registration Status</span>
+  </div>
+
+  <div class="container">
+    <div class="search-card">
+      <h2>Check Your Status</h2>
+      <p>Enter your <strong>flat number</strong> or <strong>phone number</strong> to see all your registrations and payment status.</p>
+      <div class="search-row">
+        <input type="text" id="sq" placeholder="Flat number (or) phone number"
+               onkeydown="if(event.key==='Enter') doSearch()">
+        <button onclick="doSearch()">Search</button>
+      </div>
+    </div>
+
+    <div class="status-results" id="status-results"></div>
+  </div>
+
+</div>
+
+<!-- ── Payment modal ───────────────────────────────────── -->
+<div id="pay-modal-backdrop" onclick="closePayModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;"></div>
+<div id="pay-modal" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:101;background:#fff;border-radius:20px 20px 0 0;padding:28px 24px 36px;max-width:520px;margin:0 auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="width:36px;height:4px;background:rgba(0,0,0,0.15);border-radius:2px;margin:0 auto;flex:1;"></div>
+    <button onclick="closePayModal()" style="background:rgba(0,0,0,0.07);border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555;flex-shrink:0;">&times;</button>
+  </div>
+  <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#1E1408;text-align:center;margin-bottom:4px;" id="pay-modal-title">Pay via UPI</p>
+  <p style="font-size:13px;color:#9A7850;text-align:center;margin-bottom:20px;" id="pay-modal-sub"></p>
+  <a id="pay-modal-btn" href="#" onclick="closePayModal()" style="display:block;background:#8B1A1A;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:12px;text-align:center;text-decoration:none;margin-bottom:20px;">Open UPI App to Pay</a>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <div style="flex:1;height:1px;background:rgba(201,168,76,0.3);"></div>
+    <span style="font-size:11px;color:#9A7850;font-weight:600;letter-spacing:1px;">OR SCAN QR &amp; ENTER AMOUNT</span>
+    <div style="flex:1;height:1px;background:rgba(201,168,76,0.3);"></div>
+  </div>
+  <div id="pay-modal-qr" style="display:flex;justify-content:center;margin-bottom:14px;"></div>
+  <p style="font-size:12px;color:#9A7850;text-align:center;">UPI ID: <span style="font-family:monospace;background:rgba(201,168,76,0.15);padding:2px 8px;border-radius:5px;color:#1E1408;" id="pay-modal-upi"></span> <button onclick="copyUpiId()" id="upi-copy-btn" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9A7850;padding:2px 6px;vertical-align:middle;line-height:1;" title="Copy UPI ID">&#x2398;</button></p>
+</div>
+
+<script src="common.js"></script>
+<script>
+async function doSearch() {
+  const raw = document.getElementById('sq').value.trim();
+  const q   = /^\d{10}$/.test(raw) ? raw : raw.replace(/[-\s]/g, '');
+  if (!q) {
+    document.getElementById('status-results').innerHTML =
+      '<p style="text-align:center;color:var(--red);padding:16px 0;font-weight:600">Please enter your flat number or phone number.</p>';
+    return;
+  }
+
+  const container = document.getElementById('status-results');
+  container.innerHTML = `<div class="search-loader">
+    <div class="rangoli-row">
+      <span class="shape diamond"></span><span class="shape circle"></span>
+      <span class="shape petal"></span><span class="shape circle"></span>
+      <span class="shape diamond"></span><span class="shape circle"></span>
+      <span class="shape petal"></span><span class="shape circle"></span>
+      <span class="shape diamond"></span>
+    </div>
+    <span class="search-text">Searching registrations…</span>
+  </div>`;
+
+  try {
+    const res = await api({ action: 'getStatus', query: q });
+
+    if (!res.results || res.results.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🙏</div>
+          <p>No registrations found for <strong>"${q}"</strong>.<br>
+          Please check your flat number or phone and try again.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = res.results.map(r => {
+      const evCfg    = CONFIG.events[r.eventKey] || {};
+      const evAmount = r.eventKey === 'daily-pooja' ? getDpAmount(r.date) : evCfg.amount;
+      const isFree   = (evAmount === 0);
+      const isRecvd  = r.paymentStatus === 'Received';
+
+      let statusHtml = '';
+      if (isFree) {
+        statusHtml = `<span class="status-badge badge-free">Free Event</span>`;
+      } else if (isRecvd) {
+        statusHtml = `<span class="status-badge badge-received">&#10003; Payment Received</span>`;
+      } else {
+        statusHtml = `<span class="status-badge badge-pending">&#9203; Payment Pending</span>
+        ${paymentNoteHtml(evAmount, r.eventKey, r.flat)}`;
+      }
+
+      const slotHtml = r.slot
+        ? `<span><strong>Date:</strong> ${fmtDate(r.date)}</span><span><strong>Slot:</strong> ${r.slot}</span>`
+        : '';
+
+      return `
+<div class="reg-card">
+  <div class="reg-event">${evCfg.emoji || ''} ${evCfg.name || r.eventKey}</div>
+  <div class="reg-details">
+    <span><strong>Reg ID:</strong> ${r.regId}</span>
+    <span><strong>Name:</strong> ${r.name}</span>
+    <span><strong>Flat:</strong> ${r.flat}</span>
+    ${slotHtml}
+    <span><strong>Registered on:</strong> ${fmtDate(r.timestamp)}</span>
+  </div>
+  ${statusHtml}
+</div>`;
+    }).join('');
+
+  } catch (e) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">&#9888;&#65039;</div>
+        <p>${e.message || 'Could not connect. Please try again.'}</p>
+      </div>`;
+  }
+}
+
+window.addEventListener('load', function () {
+  document.getElementById('sq').focus();
+});
+</script>
+</body>
+</html>

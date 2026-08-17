@@ -1,7 +1,21 @@
   {                                                                                                                                                                                                              
     "hosting": {                                                                                                                                                                                               
       "public": ".",                                                                                                                                                                                             
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],                                                                                                                                              
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        ".git/**",
+        ".github/**",
+        "**/node_modules/**",
+        "node_modules",
+        "src/**",
+        "cloudflare-worker.js",
+        "test-sheets.js",
+        "package.json",
+        "package-lock.json",
+        "CLAUDE.md",
+        "README.md"
+      ],                                                                                                                                              
       "rewrites": [
         {
           "source": "/admin",

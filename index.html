@@ -24,7 +24,7 @@
       <div class="om-badge">ॐ</div>
       <div class="home-brand">GGUC 2026</div>
     </div>
-    <button class="status-pill" onclick="nav('status')">
+    <button class="status-pill" onclick="window.location.href='status.html'">
       🔍 Check Status
     </button>
   </div>
@@ -117,7 +117,7 @@
     <div class="result-box result-error" id="dp-error">
       <h3 id="dp-err-title">Error</h3>
       <p id="dp-err-msg"></p>
-      <button class="status-link-btn" onclick="nav('status')" style="margin-top:10px">
+      <button class="status-link-btn" onclick="window.location.href='status.html'" style="margin-top:10px">
         Check your status →
       </button>
     </div>
@@ -188,7 +188,7 @@
     <div class="result-box result-error" id="kp-error">
       <h3 id="kp-err-title">Error</h3>
       <p id="kp-err-msg"></p>
-      <button class="status-link-btn" onclick="nav('status')" style="margin-top:10px">
+      <button class="status-link-btn" onclick="window.location.href='status.html'" style="margin-top:10px">
         Check your status →
       </button>
     </div>
@@ -259,7 +259,7 @@
     <div class="result-box result-error" id="gh-error">
       <h3 id="gh-err-title">Error</h3>
       <p id="gh-err-msg"></p>
-      <button class="status-link-btn" onclick="nav('status')" style="margin-top:10px">
+      <button class="status-link-btn" onclick="window.location.href='status.html'" style="margin-top:10px">
         Check your status →
       </button>
     </div>
@@ -268,34 +268,9 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     STATUS / SEARCH
-     ══════════════════════════════════════════════════════════ -->
-<div id="s-status" class="section">
-
-  <div class="topbar">
-    <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
-    <span class="topbar-title">Registration Status</span>
-  </div>
-
-  <div class="container">
-    <div class="search-card">
-      <h2>Check Your Status</h2>
-      <p>Enter your <strong>flat number</strong> or <strong>phone number</strong> to see all your registrations and payment status.</p>
-      <div class="search-row">
-        <input type="text" id="sq" placeholder="Flat number or phone  (e.g. C806)"
-               onkeydown="if(event.key==='Enter') doSearch()">
-        <button onclick="doSearch()">Search</button>
-      </div>
-    </div>
-
-    <div class="status-results" id="status-results"></div>
-  </div>
-
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
      JAVASCRIPT
      ══════════════════════════════════════════════════════════ -->
+<script src="common.js"></script>
 <script src="app.js"></script>
 
 <!-- ── Payment modal ───────────────────────────────────── -->
