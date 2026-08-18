@@ -2,7 +2,7 @@ const CONFIG = {
   // Registration worker (validate + insert):
   //   Sheets-only: 'https://ggucapi.giri-kailasam.workers.dev/'
   //   D1+Sheets:   'https://gguc2026e.giri-kailasam.workers.dev/'
-  API_URL:          'https://gguc2026e.giri-kailasam.workers.dev/',
+  API_URL:          'https://ggucapi.giri-kailasam.workers.dev/',
 
   // Admin worker (search + updatePayment): set URL once deployed
   ADMIN_API_URL:    'https://ggucadmin.giri-kailasam.workers.dev/',

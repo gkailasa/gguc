@@ -295,3 +295,18 @@ tr.gridjs-tr:hover td { background: rgba(201,168,76,0.06) !important; }
   .gridjs-table { font-size: 12px; }
   th.gridjs-th, td.gridjs-td { padding: 8px 10px !important; }
 }
+
+.summary-status {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.status-paid {
+  color: #10b981; /* Green for paid */
+  font-weight: 600;
+}
+
+.status-pending {
+  color: #f59e0b; /* Orange/Amber for pending */
+  font-weight: 600;
+}

@@ -8,6 +8,7 @@ const EVENT_LABELS = {
 const DISPLAY_COLS = ['Flat', 'Payment Status', 'Name', 'Action', 'Phone', 'Date', 'Slot', 'Timestamp', 'Reg ID'];
 
 let adminPassword = '';
+let currentUser = null;
 
 /* ── Login / Logout ── */
 
@@ -33,6 +34,7 @@ async function login() {
     }
 
     adminPassword = pwd;
+    currentUser = json.user || { name: 'Admin', canUpdate: true };
     showAdmin(json.data);
   } catch (e) {
     err.textContent = 'Network error. Please try again.';
@@ -44,6 +46,7 @@ async function login() {
 
 function logout() {
   adminPassword = '';
+  currentUser = null;
   document.getElementById('admin-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('logout-btn').style.display = 'none';
@@ -117,6 +120,16 @@ function showAdmin(data) {
   document.getElementById('admin-screen').style.display = 'block';
   document.getElementById('logout-btn').style.display = 'inline-block';
 
+  const userPill = document.getElementById('user-pill');
+  if (currentUser) {
+    userPill.style.display = 'inline-block';
+    userPill.textContent = currentUser.canUpdate
+      ? `Logged in as ${currentUser.name} (can update)`
+      : `Logged in as ${currentUser.name} (read-only)`;
+  } else {
+    userPill.style.display = 'none';
+  }
+
   const summaryBar = document.getElementById('summary-bar');
   const tabsEl     = document.getElementById('tabs');
   const panelsEl   = document.getElementById('panels');
@@ -137,11 +150,21 @@ function showAdmin(data) {
     // Summary card
     const card = document.createElement('div');
     card.className = 'summary-card';
+    // card.innerHTML = `
+    //   <div class="count">${total}</div>
+    //   <div class="label">${label}</div>
+    //   ${total > 0 ? `<div class="paid">${paid} paid${(total - paid) > 0 ? ` &middot; ${total - paid} pending` : ''}</div>` : ''}
+    // `;
     card.innerHTML = `
-      <div class="count">${total}</div>
-      <div class="label">${label}</div>
-      ${total > 0 ? `<div class="paid">${paid} paid${(total - paid) > 0 ? ` &middot; ${total - paid} pending` : ''}</div>` : ''}
-    `;
+  <div class="count">${total}</div>
+  <div class="label">${label}</div>
+  ${total > 0 ? `
+    <div class="summary-status">
+      <span class="status-paid">${paid} paid</span>
+      ${(total - paid) > 0 ? ` &middot; <span class="status-pending">${total - paid} pending</span>` : ''}
+    </div>
+  ` : ''}
+`;
     summaryBar.appendChild(card);
 
     // Tab
@@ -173,7 +196,7 @@ function switchTab(idx) {
 }
 
 function renderGrid(container, eventKey, rows) {
-  const cols = [...DISPLAY_COLS, 'Action'];
+  const cols = DISPLAY_COLS;
 
   const columns = cols.map(col => ({
     id:   col,
@@ -185,7 +208,7 @@ function renderGrid(container, eventKey, rows) {
       if (col === 'Date')           return fmtEventDate(cell);
       if (col === 'Action') {
         const status = row.cells[cols.indexOf('Payment Status')].data;
-        if (status === 'Received') return gridjs.html('');
+        if (status === 'Received' || !currentUser || !currentUser.canUpdate) return gridjs.html('');
         const regId = row.cells[cols.indexOf('Reg ID')].data;
         const flat  = row.cells[cols.indexOf('Flat')].data;
         return gridjs.html(
