@@ -1,17 +1,29 @@
 const EVENT_LABELS = {
   'daily-pooja':     'Daily Pooja',
   'kumkuma-pooja':   'Kumkuma Pooja',
-  'ganapathi-homam': 'Ganapathi Homam',
+  'ganapathi-homam': 'Ganapathi Homam'
 };
-
-// Column order: key fields first on mobile, Reg ID moved to the end
-const DISPLAY_COLS = ['Flat', 'Payment Status', 'Name', 'Action', 'Phone', 'Date', 'Slot', 'Timestamp', 'Reg ID'];
 
 let adminPassword = '';
 let currentUser = null;
+let globalAdminData = null;
+
+let activeTabIndex = 0;
+let currentSearchQuery = '';
+let currentStatusFilter = 'PENDING';
+let currentSelectedDate = 'ALL';
+let pendingAction = null;
+
+/* ── Utility: Debounce ── */
+function debounce(func, delay = 150) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(...args), delay);
+  };
+}
 
 /* ── Login / Logout ── */
-
 async function login() {
   const pwd = document.getElementById('pwd-input').value.trim();
   if (!pwd) return;
@@ -47,6 +59,12 @@ async function login() {
 function logout() {
   adminPassword = '';
   currentUser = null;
+  globalAdminData = null;
+  activeTabIndex = 0;
+  currentSearchQuery = '';
+  currentStatusFilter = 'PENDING';
+  currentSelectedDate = 'ALL';
+  
   document.getElementById('admin-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('logout-btn').style.display = 'none';
@@ -55,8 +73,7 @@ function logout() {
   document.getElementById('login-btn').textContent = 'Continue';
 }
 
-/* ── Formatters ── */
-
+/* ── Helpers ── */
 function fmtEventDate(val) {
   if (!val) return '—';
   const parts = val.split('-');
@@ -72,7 +89,6 @@ function statusBadge(val) {
 }
 
 /* ── Refresh ── */
-
 async function refreshAdmin() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
@@ -88,34 +104,70 @@ async function refreshAdmin() {
   }
 }
 
-/* ── Mark as Paid ── */
-
-async function markAsPaid(regId, eventKey, flat, btnEl) {
+/* ── Confirmation Modal ── */
+function openConfirmModal(regId, eventKey, flat, name) {
   const eventName = EVENT_LABELS[eventKey] || eventKey;
-  if (!confirm(`Mark Flat ${flat} (${eventName}) as Payment Received?`)) return;
-  btnEl.disabled = true;
-  btnEl.textContent = '…';
+  document.getElementById('modal-flat').textContent = flat;
+  document.getElementById('modal-name').textContent = name;
+  document.getElementById('modal-event').textContent = eventName;
+  
+  pendingAction = { regId, eventKey, flat };
+  
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+  confirmBtn.onclick = executeMarkAsPaid;
+  confirmBtn.disabled = false;
+  confirmBtn.textContent = 'Confirm Received';
+  
+  document.getElementById('confirm-modal').classList.add('active');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('active');
+  pendingAction = null;
+}
+
+async function executeMarkAsPaid() {
+  if (!pendingAction) return;
+  const { regId, eventKey } = pendingAction;
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+  
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Updating…';
 
   try {
     const res = await adminApi({ action: 'updatePayment', regId, paymentStatus: 'Received', password: adminPassword });
+    
     if (res.success) {
-      const json = await adminApi({ action: 'getAdmin', password: adminPassword });
-      showAdmin(json.data);
+      closeConfirmModal();
+
+      // 1. Find and update the record directly in client memory
+      const eventData = globalAdminData[eventKey];
+      if (eventData && Array.isArray(eventData.rows)) {
+        const targetRow = eventData.rows.find(r => r['Reg ID'] === regId);
+        if (targetRow) {
+          targetRow['Payment Status'] = 'Received';
+        }
+      }
+
+      // 2. Refresh the UI elements without fetching network data
+      renderSummaryCards();
+      renderActiveTabContent();
+
     } else {
-      alert(res.error === 'unauthorized' ? 'Session expired. Please log in again.' : 'Update failed. Please try again.');
-      btnEl.disabled = false;
-      btnEl.textContent = 'Mark Paid';
+      alert(res.error === 'unauthorized' ? 'Session expired. Please log in again.' : 'Update failed.');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm Received';
     }
   } catch(e) {
     alert('Network error. Please try again.');
-    btnEl.disabled = false;
-    btnEl.textContent = 'Mark Paid';
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirm Received';
   }
 }
 
-/* ── Render ── */
-
+/* ── Main Render Logic ── */
 function showAdmin(data) {
+  globalAdminData = data || {};
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-screen').style.display = 'block';
   document.getElementById('logout-btn').style.display = 'inline-block';
@@ -124,123 +176,222 @@ function showAdmin(data) {
   if (currentUser) {
     userPill.style.display = 'inline-block';
     userPill.textContent = currentUser.canUpdate
-      ? `Logged in as ${currentUser.name} (can update)`
-      : `Logged in as ${currentUser.name} (read-only)`;
-  } else {
-    userPill.style.display = 'none';
+      ? `👤 ${currentUser.name}`
+      : `👤 ${currentUser.name} (Read Only)`;
   }
 
+  setupGlobalFilterListeners();
+  renderSummaryCards();
+  renderTabs();
+  
+  switchTab(activeTabIndex);
+}
+
+function setupGlobalFilterListeners() {
+  const searchInput = document.getElementById('global-search');
+  searchInput.value = currentSearchQuery;
+  
+  const handleSearch = debounce((val) => {
+    currentSearchQuery = val.toLowerCase().trim();
+    renderActiveTabContent();
+  }, 150);
+  
+  searchInput.oninput = (e) => handleSearch(e.target.value);
+
+  const toggleBtns = document.querySelectorAll('#status-toggle-bar .filter-toggle-btn');
+  toggleBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.status === currentStatusFilter);
+    btn.onclick = () => {
+      currentStatusFilter = btn.dataset.status;
+      toggleBtns.forEach(b => b.classList.toggle('active', b.dataset.status === currentStatusFilter));
+      renderActiveTabContent();
+    };
+  });
+
+  const dateSelect = document.getElementById('date-filter-select');
+  dateSelect.onchange = (e) => {
+    currentSelectedDate = e.target.value;
+    renderActiveTabContent();
+  };
+}
+
+function renderSummaryCards() {
   const summaryBar = document.getElementById('summary-bar');
-  const tabsEl     = document.getElementById('tabs');
-  const panelsEl   = document.getElementById('panels');
-
   summaryBar.innerHTML = '';
-  tabsEl.innerHTML     = '';
-  panelsEl.innerHTML   = '';
-
   const eventKeys = Object.keys(EVENT_LABELS);
-  let firstTab = true;
 
-  eventKeys.forEach((eventKey, idx) => {
-    const rows  = (data[eventKey] || {}).rows || [];
+  eventKeys.forEach(eventKey => {
+    const eventObj = globalAdminData[eventKey];
+    const rows = (eventObj && Array.isArray(eventObj.rows)) ? eventObj.rows : [];
     const total = rows.length;
     const paid  = rows.filter(r => r['Payment Status'] === 'Received').length;
     const label = EVENT_LABELS[eventKey];
 
-    // Summary card
     const card = document.createElement('div');
     card.className = 'summary-card';
-    // card.innerHTML = `
-    //   <div class="count">${total}</div>
-    //   <div class="label">${label}</div>
-    //   ${total > 0 ? `<div class="paid">${paid} paid${(total - paid) > 0 ? ` &middot; ${total - paid} pending` : ''}</div>` : ''}
-    // `;
     card.innerHTML = `
-  <div class="count">${total}</div>
-  <div class="label">${label}</div>
-  ${total > 0 ? `
-    <div class="summary-status">
-      <span class="status-paid">${paid} paid</span>
-      ${(total - paid) > 0 ? ` &middot; <span class="status-pending">${total - paid} pending</span>` : ''}
-    </div>
-  ` : ''}
-`;
+      <div class="count">${total}</div>
+      <div class="label">${label}</div>
+      ${total > 0 ? `
+        <div class="summary-status">
+          <span class="status-paid">${paid} paid</span> &middot; <span class="status-pending">${total - paid} pending</span>
+        </div>
+      ` : '<div class="summary-status" style="color:var(--muted)">0 entries</div>'}
+    `;
     summaryBar.appendChild(card);
+  });
+}
 
-    // Tab
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  const eventKeys = Object.keys(EVENT_LABELS);
+
+  eventKeys.forEach((eventKey, idx) => {
+    const label = EVENT_LABELS[eventKey];
     const tab = document.createElement('div');
-    tab.className = 'tab' + (firstTab ? ' active' : '');
+    tab.className = 'tab' + (idx === activeTabIndex ? ' active' : '');
     tab.textContent = label;
     tab.onclick = () => switchTab(idx);
     tabsEl.appendChild(tab);
-
-    // Panel
-    const panel = document.createElement('div');
-    panel.className = 'tab-panel' + (firstTab ? ' active' : '');
-    panel.id = `panel-${idx}`;
-    panelsEl.appendChild(panel);
-
-    if (total === 0) {
-      panel.innerHTML = `<div class="empty-note">No registrations yet for ${label}.</div>`;
-    } else {
-      renderGrid(panel, eventKey, rows);
-    }
-
-    firstTab = false;
   });
 }
 
 function switchTab(idx) {
-  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-  document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  activeTabIndex = idx;
+  const eventKeys = Object.keys(EVENT_LABELS);
+  const currentEventKey = eventKeys[idx];
+
+  // Update tab styles
+  document.querySelectorAll('.tabs .tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+
+  // Toggle Daily Pooja Date Filter dropdown visibility
+  const dateFilterWrap = document.getElementById('date-filter-wrap');
+  if (currentEventKey === 'daily-pooja') {
+    populateDailyPoojaDates(globalAdminData['daily-pooja']?.rows || []);
+    dateFilterWrap.style.display = 'block';
+  } else {
+    dateFilterWrap.style.display = 'none';
+  }
+
+  renderActiveTabContent();
 }
 
-function renderGrid(container, eventKey, rows) {
-  const cols = DISPLAY_COLS;
+function populateDailyPoojaDates(rows) {
+  const dateSelect = document.getElementById('date-filter-select');
+  const uniqueDates = [...new Set(rows.map(r => r['Date']).filter(Boolean))].sort();
 
-  const columns = cols.map(col => ({
-    id:   col,
-    name: col === 'Timestamp' ? 'Registered On' : col,
-    sort: col !== 'Action',
-    formatter: (cell, row) => {
-      if (col === 'Payment Status') return gridjs.html(statusBadge(cell));
-      if (col === 'Timestamp')      return fmtDate(cell);
-      if (col === 'Date')           return fmtEventDate(cell);
-      if (col === 'Action') {
-        const status = row.cells[cols.indexOf('Payment Status')].data;
-        if (status === 'Received' || !currentUser || !currentUser.canUpdate) return gridjs.html('');
-        const regId = row.cells[cols.indexOf('Reg ID')].data;
-        const flat  = row.cells[cols.indexOf('Flat')].data;
-        return gridjs.html(
-          `<button class="mark-paid-btn" onclick="markAsPaid('${regId}', '${eventKey}', '${flat}', this)">Mark Paid</button>`
-        );
-      }
-      return cell || '—';
-    },
-  }));
+  dateSelect.innerHTML = '<option value="ALL">All Dates</option>';
+  uniqueDates.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = fmtEventDate(d);
+    dateSelect.appendChild(opt);
+  });
 
-  const tableData = rows.map(row =>
-    cols.map(col => col === 'Action' ? '' : (row[col] || ''))
-  );
+  dateSelect.value = currentSelectedDate;
+}
 
-  const scrollWrap = document.createElement('div');
-  scrollWrap.className = 'table-scroll';
-  container.appendChild(scrollWrap);
+function renderActiveTabContent() {
+  const eventKeys = Object.keys(EVENT_LABELS);
+  const eventKey = eventKeys[activeTabIndex];
+  const container = document.getElementById('panels-container');
+  container.innerHTML = '';
 
-  new gridjs.Grid({
-    columns,
-    data: tableData,
-    search: true,
-    sort: true,
-    pagination: { limit: 20 },
-    style: {
-      table: { 'white-space': 'nowrap' },
-      th:    { 'white-space': 'nowrap' },
-      td:    { 'white-space': 'nowrap' },
-    },
-  }).render(scrollWrap);
+  const eventObj = globalAdminData[eventKey];
+  const rows = (eventObj && Array.isArray(eventObj.rows)) ? eventObj.rows : [];
+
+  // Apply Search, Status, and Date Filters
+  let filteredRows = rows.filter(r => {
+    // 1. Status Filter
+    const matchesStatus = 
+      currentStatusFilter === 'ALL' ? true :
+      currentStatusFilter === 'RECEIVED' ? r['Payment Status'] === 'Received' :
+      r['Payment Status'] !== 'Received';
+
+    if (!matchesStatus) return false;
+
+    // 2. Daily Pooja Date Filter
+    if (eventKey === 'daily-pooja' && currentSelectedDate !== 'ALL') {
+      if (r['Date'] !== currentSelectedDate) return false;
+    }
+
+    // 3. Search Term Filter
+    if (!currentSearchQuery) return true;
+
+    const flat = String(r['Flat'] || '').toLowerCase();
+    const name = String(r['Name'] || '').toLowerCase();
+    const phone = String(r['Phone'] || '').toLowerCase();
+    const regId = String(r['Reg ID'] || '').toLowerCase();
+
+    return flat.includes(currentSearchQuery) || 
+           name.includes(currentSearchQuery) || 
+           phone.includes(currentSearchQuery) || 
+           regId.includes(currentSearchQuery);
+  });
+
+  if (filteredRows.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-note';
+    empty.textContent = currentSearchQuery 
+      ? `No results matching "${currentSearchQuery}".` 
+      : `No registrations found for current filters.`;
+    container.appendChild(empty);
+    return;
+  }
+
+  // Render Cards Grid
+  const cardsList = document.createElement('div');
+  cardsList.className = 'cards-list';
+
+  filteredRows.forEach(row => {
+    const isPaid = row['Payment Status'] === 'Received';
+    const regCard = document.createElement('div');
+    regCard.className = `reg-card ${isPaid ? 'paid' : 'pending'}`;
+    const rawPhone = row['Phone'] ? String(row['Phone']).replace(/\D/g, '') : '';
+
+    regCard.innerHTML = `
+      <div class="card-header">
+        <div class="card-flat">Flat ${row['Flat'] || '—'}</div>
+        ${statusBadge(row['Payment Status'])}
+      </div>
+      <div class="card-name">${row['Name'] || '—'}</div>
+      
+      <div class="card-grid">
+        <div class="card-grid-item">
+          <span>Date</span>
+          ${fmtEventDate(row['Date'])}
+        </div>
+        <div class="card-grid-item">
+          <span>Slot</span>
+          ${row['Slot'] || '—'}
+        </div>
+        <div class="card-grid-item">
+          <span>Registered On</span>
+          ${typeof fmtDate === 'function' ? fmtDate(row['Timestamp']) : (row['Timestamp'] || '—')}
+        </div>
+        <div class="card-grid-item">
+          <span>Reg ID</span>
+          ${row['Reg ID'] || '—'}
+        </div>
+      </div>
+
+      <div class="card-actions">
+        ${rawPhone ? `<a href="tel:${rawPhone}" class="card-btn-call">📞 Call</a>` : ''}
+        ${!isPaid && currentUser && currentUser.canUpdate ? `
+          <button class="card-btn-pay" onclick="openConfirmModal('${row['Reg ID']}', '${eventKey}', '${row['Flat']}', '${row['Name']}')">
+            Mark Paid
+          </button>
+        ` : ''}
+      </div>
+    `;
+    cardsList.appendChild(regCard);
+  });
+
+  container.appendChild(cardsList);
 }
 
 window.addEventListener('load', () => {
-  document.getElementById('pwd-input').focus();
+  const pwdInput = document.getElementById('pwd-input');
+  if (pwdInput) pwdInput.focus();
 });

@@ -1,17 +1,16 @@
 /*
  * Worker: Scheduled D1 → Google Sheets Sync
  * Runs on a Cloudflare Cron Trigger.
- * Finds rows with synced_at IS NULL, upserts them to Sheets, marks them synced.
- * Also handles payment-status updates for already-synced rows that changed again.
+ * Finds unsynced rows, upserts them to Sheets, marks them synced in batches.
  */
 
 const SHEET_ID = '1-P3FOKShM4aBRPqL5qAWblXbO0X6XqtB6uMRHL6-rh8';
 const SCOPES   = 'https://www.googleapis.com/auth/spreadsheets';
 
-const EVENTS  = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
-const COLUMNS = ['Reg ID', 'Timestamp', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Payment Date'];
+const EVENTS     = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
+const BATCH_LIMIT = 5; // Per event limit per scheduled execution
 
-// In-memory token cache across requests on the same instance
+// In-memory token cache across requests on the same warm instance
 let cachedToken = null;
 let tokenExpiry = 0;
 
@@ -65,7 +64,7 @@ async function getAccessToken(serviceAccount) {
   return cachedToken;
 }
 
-/* ── Sheets helpers ──────────────────────────────────────── */
+/* ── Sheets API Helpers ───────────────────────────────────── */
 
 async function sheetsGet(token, range) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}`;
@@ -96,65 +95,29 @@ async function sheetsUpdate(token, range, values) {
   return res.json();
 }
 
-async function createSheetTab(token, title) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      requests: [{ addSheet: { properties: { title } } }],
-    }),
-  });
-  if (!res.ok) throw new Error('Create sheet tab error: ' + res.status);
-  return res.json();
-}
-
 /* ── Sync one event ──────────────────────────────────────── */
 
 async function syncEvent(db, eventKey, token) {
+  // Fetch up to BATCH_LIMIT unsynced rows
   const { results } = await db.prepare(
-    `SELECT * FROM registrations WHERE event_key = ? AND synced_at IS NULL ORDER BY timestamp ASC`
-  ).bind(eventKey).all();
+    `SELECT * FROM registrations WHERE event_key = ? AND synced_at IS NULL ORDER BY timestamp ASC LIMIT ?`
+  ).bind(eventKey, BATCH_LIMIT).all();
 
   if (!results || results.length === 0) return 0;
 
-  // Ensure tab exists and has headers
-  let tabExists = false;
-  try {
-    await sheetsGet(token, `${eventKey}!A1:A1`);
-    tabExists = true;
-  } catch (e) {
-    if (e.message.includes('404') || e.message.includes('Unable to parse range')) {
-      // Tab probably does not exist
-    } else {
-      throw e;
-    }
-  }
+  // Read Column A IDs from existing sheet
+  const sheetData = await sheetsGet(token, `${eventKey}!A:A`);
+  const existingRows = sheetData.values || [];
 
-  if (!tabExists) {
-    await createSheetTab(token, eventKey);
-    await sheetsAppend(token, `${eventKey}!A1`, [COLUMNS]);
-  } else {
-    // Ensure headers exist if tab is empty
-    let existing = [];
-    try {
-      const res = await sheetsGet(token, `${eventKey}!A1:A1`);
-      existing = res.values || [];
-    } catch (e) {}
-    if (existing.length === 0) {
-      await sheetsAppend(token, `${eventKey}!A1`, [COLUMNS]);
-    }
-  }
-
-  // Build map of existing Reg IDs → sheet row number (1-based)
-  const regIdsRes = await sheetsGet(token, `${eventKey}!A:A`);
+  // Map existing Reg IDs → sheet row index (1-based)
   const idToRow = new Map();
-  (regIdsRes.values || []).forEach((row, idx) => {
+  existingRows.forEach((row, idx) => {
     if (row[0] && idx > 0) idToRow.set(row[0], idx + 1);
   });
 
   const now = new Date().toISOString();
   const updateSyncStmt = db.prepare(`UPDATE registrations SET synced_at = ? WHERE id = ?`);
+  const batchStatements = [];
 
   for (const r of results) {
     const rowData = [r.id, r.timestamp, r.name, r.flat, r.phone, r.event_date, r.slot, r.payment_status, r.payment_date];
@@ -166,7 +129,12 @@ async function syncEvent(db, eventKey, token) {
       await sheetsAppend(token, `${eventKey}!A:I`, [rowData]);
     }
 
-    await updateSyncStmt.bind(now, r.id).run();
+    batchStatements.push(updateSyncStmt.bind(now, r.id));
+  }
+
+  // Batch update all successfully processed IDs in D1 in a single round-trip
+  if (batchStatements.length > 0) {
+    await db.batch(batchStatements);
   }
 
   return results.length;
@@ -176,10 +144,20 @@ async function syncEvent(db, eventKey, token) {
 
 export default {
   async scheduled(controller, env, ctx) {
-    const serviceAccount = JSON.parse(env.SERVICE_ACCOUNT_JSON);
-
     ctx.waitUntil((async () => {
+      // 1. Quick existence check before performing JSON parsing or RSA auth
+      const query = `SELECT 1 FROM registrations WHERE synced_at IS NULL AND event_key IN (${EVENTS.map(() => '?').join(',')}) LIMIT 1`;
+      const pendingCheck = await env.DB.prepare(query).bind(...EVENTS).first();
+
+      if (!pendingCheck) {
+        console.log('No unsynced rows found. Skipping auth & sync.');
+        return;
+      }
+
+      // 2. Parse credentials & obtain access token lazily
+      const serviceAccount = JSON.parse(env.SERVICE_ACCOUNT_JSON);
       const token = await getAccessToken(serviceAccount);
+
       let total = 0;
       for (const event of EVENTS) {
         total += await syncEvent(env.DB, event, token);
@@ -188,7 +166,7 @@ export default {
     })());
   },
 
-  // Optional: allow manual trigger via HTTP for testing
+  // Optional manual HTTP trigger for testing
   async fetch(request, env, ctx) {
     if (request.method !== 'POST') {
       return new Response('Send POST to trigger sync', { status: 405 });
