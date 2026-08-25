@@ -53,6 +53,30 @@ function renderCards() {
   }).join('');
 }
 
+function renderEventDetails() {
+  const details = [
+    { key: 'daily-pooja', prefix: 'dp' },
+    { key: 'kumkuma-pooja', prefix: 'kp' },
+    { key: 'ganapathi-homam', prefix: 'gh' },
+  ];
+
+  details.forEach(({ key, prefix }) => {
+    const event = CONFIG.events[key];
+    document.getElementById(`${prefix}-title`).textContent = `${event.name} Registration`;
+    document.getElementById(`${prefix}-display-date`).textContent = `📅 ${event.displayDate}`;
+    document.getElementById(`${prefix}-time`).textContent = `🕐 ${event.time}`;
+    document.getElementById(`${prefix}-amount`).textContent = event.amountLabel;
+
+    if (event.slots) {
+      const slotSelect = document.getElementById(`${prefix}-slot`);
+      slotSelect.innerHTML = '<option value="">Select slot</option>';
+      event.slots.forEach(slot => {
+        slotSelect.add(new Option(slot, slot));
+      });
+    }
+  });
+}
+
 /* ── Form state helpers ──────────────────────────────────── */
 
 function setLoading(pfx, on) {
@@ -215,6 +239,7 @@ window.addEventListener('load', function () {
   document.getElementById('footer-apt').textContent = CONFIG.APARTMENT_NAME;
 
   renderCards();
+  renderEventDetails();
 
   const dpDate = document.getElementById('dp-date');
   const dpCfg  = CONFIG.events['daily-pooja'];

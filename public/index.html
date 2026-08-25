@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Community Pooja — Greenmark Galaxy</title>
+<title>GGUC 2026</title>
+<link rel="icon" type="image/png" href="icons/galaxy_logo.png">
+<link rel="shortcut icon" type="image/png" href="icons/galaxy_logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="preload" href="galaxy_cultural_qr.jpg" as="image">
@@ -52,16 +54,16 @@
 
   <div class="topbar">
     <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
-    <span class="topbar-title">Daily Pooja Registration</span>
+    <span class="topbar-title" id="dp-title"></span>
   </div>
 
   <div class="event-strip">
     <div class="strip-inner">
       <div class="event-meta">
-        <span>📅 Sep 15–24, 2026</span>
-        <span>🕐 Morning &amp; Evening</span>
+        <span id="dp-display-date"></span>
+        <span id="dp-time"></span>
       </div>
-      <span class="amount-pill paid">₹516 / ₹1116 (weekends)</span>
+      <span class="amount-pill paid" id="dp-amount"></span>
     </div>
   </div>
 
@@ -101,8 +103,6 @@
           <label for="dp-slot">Slot <span class="req">*</span></label>
           <select id="dp-slot">
             <option value="">Select slot</option>
-            <option value="Morning">Morning</option>
-            <option value="Evening">Evening</option>
           </select>
         </div>
       </div>
@@ -136,16 +136,16 @@
 
   <div class="topbar">
     <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
-    <span class="topbar-title">Kumkuma Pooja Registration</span>
+    <span class="topbar-title" id="kp-title"></span>
   </div>
 
   <div class="event-strip">
     <div class="strip-inner">
       <div class="event-meta">
-        <span>📅 Sep 18, 2026</span>
-        <span>🕐 6:00 PM – 7:30 PM</span>
+        <span id="kp-display-date"></span>
+        <span id="kp-time"></span>
       </div>
-      <span class="amount-pill paid">₹216 / person</span>
+      <span class="amount-pill paid" id="kp-amount"></span>
     </div>
   </div>
 
@@ -206,16 +206,16 @@
 
   <div class="topbar">
     <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
-    <span class="topbar-title">Ganapathi Homam Registration</span>
+    <span class="topbar-title" id="gh-title"></span>
   </div>
 
   <div class="event-strip">
     <div class="strip-inner">
       <div class="event-meta">
-        <span>📅 Sep 16, 2026</span>
-        <span>🕐 5:30 AM – 7:30 AM</span>
+        <span id="gh-display-date"></span>
+        <span id="gh-time"></span>
       </div>
-      <span class="amount-pill paid">₹2116 per family</span>
+      <span class="amount-pill paid" id="gh-amount"></span>
     </div>
   </div>
 

@@ -10,6 +10,7 @@ const EVENT_CONFIG = {
     blockedSlots: [
       { date: '2026-09-14', slot: 'Morning' },
       { date: '2026-09-14', slot: 'Evening' },
+      { date: '2026-09-24', slot: 'Evening' },
     ],
   },
   'kumkuma-pooja': {
