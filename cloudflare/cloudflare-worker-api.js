@@ -6,7 +6,8 @@
 
 const EVENT_CONFIG = {
   'daily-pooja': {
-    maxPerSlot: 10,
+    idPrefix:     'DP',
+    maxPerSlot:   10,
     blockedSlots: [
       { date: '2026-09-14', slot: 'Morning' },
       { date: '2026-09-14', slot: 'Evening' },
@@ -14,10 +15,12 @@ const EVENT_CONFIG = {
     ],
   },
   'kumkuma-pooja': {
-    maxRegistrations: null,
+    idPrefix:          'KP',
+    maxRegistrations:  null,
   },
   'ganapathi-homam': {
-    maxRegistrations: 10,
+    idPrefix:          'GH',
+    maxRegistrations:  10,
   },
 };
 
@@ -33,7 +36,7 @@ async function handleRegister(db, event, data) {
   if (cfg.maxPerSlot) {
     // Check blocked slots
     const blocked = (cfg.blockedSlots || []).find(b => b.date === date && b.slot === slot);
-    if (blocked) return { success: false, error: 'blocked', message: 'This slot is reserved.' };
+    if (blocked) return { success: false, error: 'blocked', message: 'This slot is not available to register.' };
 
     // Check duplicate in D1
     const dup = await db.prepare(
@@ -61,8 +64,7 @@ async function handleRegister(db, event, data) {
     }
   }
 
-  const prefix = { 'daily-pooja': 'DP', 'kumkuma-pooja': 'KP', 'ganapathi-homam': 'GH' }[event] || 'XX';
-  const regId = prefix + Date.now().toString(36).toUpperCase();
+  const regId = (cfg.idPrefix || 'XX') + Date.now().toString(36).toUpperCase();
   const timestamp = new Date().toISOString();
 
   await db.prepare(

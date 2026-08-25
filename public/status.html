@@ -95,7 +95,7 @@ async function doSearch() {
 
     container.innerHTML = res.results.map(r => {
       const evCfg    = CONFIG.events[r.eventKey] || {};
-      const evAmount = r.eventKey === 'daily-pooja' ? getDpAmount(r.date) : evCfg.amount;
+      const evAmount = getEventAmount(r.eventKey, r.date);
       const isFree   = (evAmount === 0);
       const isRecvd  = r.paymentStatus === 'Received';
 

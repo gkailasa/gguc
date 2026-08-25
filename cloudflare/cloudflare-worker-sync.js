@@ -7,7 +7,14 @@
 const SHEET_ID = '1-P3FOKShM4aBRPqL5qAWblXbO0X6XqtB6uMRHL6-rh8';
 const SCOPES   = 'https://www.googleapis.com/auth/spreadsheets';
 
-const EVENTS     = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
+// Add new events here — EVENTS list is derived from this config.
+// No other changes needed in this worker when adding an event.
+const EVENT_CONFIG = {
+  'daily-pooja':     {},
+  'kumkuma-pooja':   {},
+  'ganapathi-homam': {},
+};
+const EVENTS      = Object.keys(EVENT_CONFIG);
 const BATCH_LIMIT = 5; // Per event limit per scheduled execution
 
 // In-memory token cache across requests on the same warm instance

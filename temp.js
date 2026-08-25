@@ -1,182 +1,147 @@
-/*
- * Worker: Scheduled D1 → Google Sheets Sync
- * Runs on a Cloudflare Cron Trigger.
- * Finds unsynced rows, upserts them to Sheets, marks them synced in batches.
- */
+// Worker — Admin API. 
+// Actions: getStatus (public), getAdmin (password), updatePayment (password)
+// Data source: D1 only. Google Sheets sync is handled by cloudflare-worker-sync.js.
 
-const SHEET_ID = '1-P3FOKShM4aBRPqL5qAWblXbO0X6XqtB6uMRHL6-rh8';
-const SCOPES   = 'https://www.googleapis.com/auth/spreadsheets';
+const EVENTS = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
 
-const EVENTS     = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
-const BATCH_LIMIT = 5; // Per event limit per scheduled execution
+/* ── Auth helpers ────────────────────────────────────────── */
 
-// In-memory token cache across requests on the same warm instance
-let cachedToken = null;
-let tokenExpiry = 0;
-
-/* ── Google Auth ───────────────────────────────────────────── */
-
-async function getAccessToken(serviceAccount) {
-  const now = Math.floor(Date.now() / 1000);
-  if (cachedToken && tokenExpiry > now + 60) return cachedToken;
-
-  const header  = { alg: 'RS256', typ: 'JWT' };
-  const payload = {
-    iss:   serviceAccount.client_email,
-    scope: SCOPES,
-    aud:   'https://oauth2.googleapis.com/token',
-    exp:   now + 3600,
-    iat:   now,
-  };
-
-  const b64 = obj => btoa(JSON.stringify(obj)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-  const signingInput = `${b64(header)}.${b64(payload)}`;
-
-  const pem = serviceAccount.private_key
-    .replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, '');
-  const binaryKey = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
-
-  const cryptoKey = await crypto.subtle.importKey(
-    'pkcs8', binaryKey,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false, ['sign']
-  );
-
-  const sig = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5', cryptoKey,
-    new TextEncoder().encode(signingInput)
-  );
-  const encodedSig = btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-
-  const jwt = `${signingInput}.${encodedSig}`;
-
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
-  });
-  const data = await res.json();
-  if (!data.access_token) throw new Error('Auth failed: ' + JSON.stringify(data));
-
-  cachedToken = data.access_token;
-  tokenExpiry = now + (data.expires_in || 3600);
-  return cachedToken;
+function getAdminUsers(env) {
+  try {
+    return JSON.parse(env.ADMIN_USERS || '[]');
+  } catch (e) {
+    return [];
+  }
 }
 
-/* ── Sheets API Helpers ───────────────────────────────────── */
-
-async function sheetsGet(token, range) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Error('Sheets GET error: ' + res.status);
-  return res.json();
+function findUser(password, env) {
+  return getAdminUsers(env).find(u => u.password === password) || null;
 }
 
-async function sheetsAppend(token, range, values) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values }),
-  });
-  if (!res.ok) throw new Error('Sheets APPEND error: ' + res.status);
-  return res.json();
-}
+/* ── Get Status ──────────────────────────────────────────── */
 
-async function sheetsUpdate(token, range, values) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values }),
-  });
-  if (!res.ok) throw new Error('Sheets UPDATE error: ' + res.status);
-  return res.json();
-}
+async function handleGetStatus(db, query) {
+  const normalizedQuery = query.trim().toLowerCase();
 
-/* ── Sync one event ──────────────────────────────────────── */
-
-async function syncEvent(db, eventKey, token) {
-  // Fetch up to BATCH_LIMIT unsynced rows
   const { results } = await db.prepare(
-    `SELECT * FROM registrations WHERE event_key = ? AND synced_at IS NULL ORDER BY timestamp ASC LIMIT ?`
-  ).bind(eventKey, BATCH_LIMIT).all();
+    `SELECT * FROM registrations WHERE LOWER(flat) = ? OR phone = ? ORDER BY timestamp ASC`
+  ).bind(normalizedQuery, query.trim()).all();
 
-  if (!results || results.length === 0) return 0;
-
-  // Read Column A IDs from existing sheet
-  const sheetData = await sheetsGet(token, `${eventKey}!A:A`);
-  const existingRows = sheetData.values || [];
-
-  // Map existing Reg IDs → sheet row index (1-based)
-  const idToRow = new Map();
-  existingRows.forEach((row, idx) => {
-    if (row[0] && idx > 0) idToRow.set(row[0], idx + 1);
-  });
-
-  const now = new Date().toISOString();
-  const updateSyncStmt = db.prepare(`UPDATE registrations SET synced_at = ? WHERE id = ?`);
-  const batchStatements = [];
-
-  for (const r of results) {
-    const rowData = [r.id, r.timestamp, r.name, r.flat, r.phone, r.event_date, r.slot, r.payment_status, r.payment_date];
-
-    if (idToRow.has(r.id)) {
-      const sheetRow = idToRow.get(r.id);
-      await sheetsUpdate(token, `${eventKey}!A${sheetRow}:I${sheetRow}`, [rowData]);
-    } else {
-      await sheetsAppend(token, `${eventKey}!A:I`, [rowData]);
-    }
-
-    batchStatements.push(updateSyncStmt.bind(now, r.id));
-  }
-
-  // Batch update all successfully processed IDs in D1 in a single round-trip
-  if (batchStatements.length > 0) {
-    await db.batch(batchStatements);
-  }
-
-  return results.length;
+  return {
+    results: (results || []).map(r => ({
+      eventKey:      r.event_key,
+      regId:         r.id,
+      timestamp:     r.timestamp,
+      name:          r.name,
+      flat:          r.flat,
+      phone:         r.phone,
+      date:          r.event_date,
+      slot:          r.slot,
+      paymentStatus: r.payment_status,
+    }))
+  };
 }
 
-/* ── Main scheduled handler ──────────────────────────────── */
+/* ── Get Admin ───────────────────────────────────────────── */
+
+async function handleGetAdmin(db, password, env) {
+  const user = findUser(password, env);
+  if (!user) return { error: 'unauthorized' };
+
+  const data = {};
+  for (const event of EVENTS) {
+    const { results } = await db.prepare(
+      `SELECT * FROM registrations WHERE event_key = ? ORDER BY timestamp ASC`
+    ).bind(event).all();
+
+    data[event] = {
+      rows: (results || []).map(r => ({
+        'Reg ID':         r.id,
+        'Timestamp':      r.timestamp,
+        'Name':           r.name,
+        'Flat':           r.flat,
+        'Phone':          r.phone,
+        'Date':           r.event_date,
+        'Slot':           r.slot,
+        'Payment Status': r.payment_status,
+        'Payment Date':   r.payment_date,
+      }))
+    };
+  }
+
+  return {
+    data,
+    user: {
+      name:      user.name,
+      canUpdate: !!user.canUpdate,
+    }
+  };
+}
+
+/* ── Update Payment ──────────────────────────────────────── */
+
+async function handleUpdatePayment(db, regId, paymentStatus, password, env) {
+  const user = findUser(password, env);
+  if (!user) return { error: 'unauthorized' };
+  if (!user.canUpdate) return { error: 'forbidden', message: 'You do not have permission to update payments.' };
+
+  const reg = await db.prepare(
+    `SELECT * FROM registrations WHERE id = ? LIMIT 1`
+  ).bind(regId).first();
+
+  if (!reg) return { success: false, error: 'not_found' };
+
+  const paymentDate = new Date().toISOString();
+
+  // Update D1 and mark row for re-sync to Sheets
+  await db.prepare(
+    `UPDATE registrations SET payment_status = ?, payment_date = ?, synced_at = NULL WHERE id = ?`
+  ).bind(paymentStatus, paymentDate, regId).run();
+
+  return { success: true };
+}
+
+/* ── CORS ────────────────────────────────────────────────── */
+
+function cors() {
+  return {
+    'Access-Control-Allow-Origin':  '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+}
+
+/* ── Main handler ────────────────────────────────────────── */
 
 export default {
-  async scheduled(controller, env, ctx) {
-    ctx.waitUntil((async () => {
-      // 1. Quick existence check before performing JSON parsing or RSA auth
-      const query = `SELECT 1 FROM registrations WHERE synced_at IS NULL AND event_key IN (${EVENTS.map(() => '?').join(',')}) LIMIT 1`;
-      const pendingCheck = await env.DB.prepare(query).bind(...EVENTS).first();
-
-      if (!pendingCheck) {
-        console.log('No unsynced rows found. Skipping auth & sync.');
-        return;
-      }
-
-      // 2. Parse credentials & obtain access token lazily
-      const serviceAccount = JSON.parse(env.SERVICE_ACCOUNT_JSON);
-      const token = await getAccessToken(serviceAccount);
-
-      let total = 0;
-      for (const event of EVENTS) {
-        total += await syncEvent(env.DB, event, token);
-      }
-      console.log(`Sheets sync complete. ${total} rows synced.`);
-    })());
-  },
-
-  // Optional manual HTTP trigger for testing
-  async fetch(request, env, ctx) {
-    if (request.method !== 'POST') {
-      return new Response('Send POST to trigger sync', { status: 405 });
+  async fetch(request, env) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: cors() });
     }
 
-    const auth = request.headers.get('Authorization') || '';
-    if (auth !== `Bearer ${env.SYNC_SECRET}`) {
-      return new Response('Unauthorized', { status: 401 });
-    }
+    try {
+      const body = await request.json();
+      const { action, query, regId, paymentStatus, password } = body;
 
-    return this.scheduled(null, env, ctx);
+      let result;
+      if (action === 'getStatus') {
+        result = await handleGetStatus(env.DB, query);
+      } else if (action === 'getAdmin') {
+        result = await handleGetAdmin(env.DB, password, env);
+      } else if (action === 'updatePayment') {
+        result = await handleUpdatePayment(env.DB, regId, paymentStatus, password, env);
+      } else {
+        result = { error: 'unknown action' };
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { ...cors(), 'Content-Type': 'application/json' },
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: 500,
+        headers: { ...cors(), 'Content-Type': 'application/json' },
+      });
+    }
   },
 };

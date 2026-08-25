@@ -22,7 +22,8 @@ const CONFIG = {
       dateTo:      '2026-09-24',          // date picker max
       time:        'Morning & Evening',
       place:       'Ganapathi Mandapam',
-      amount:      516,                   // weekday amount; weekends are 1116
+      amount:        516,                  // weekday amount
+      amountWeekend: 1116,               // weekend amount (Sat/Sun)
       amountLabel: '₹516 / ₹1116 (weekends)',
       description: 'Register your family for daily pooja during the auspicious Ganesh Chaturthi festival. Morning and evening slots available.',
       slots:       ['Morning', 'Evening'],
@@ -57,11 +58,16 @@ const CONFIG = {
   }
 };
 
-// Daily Pooja: weekends (Sat/Sun) are ₹1116, weekdays are ₹516
-function getDpAmount(dateStr) {
-  if (!dateStr) return CONFIG.events['daily-pooja'].amount;
-  const day = new Date(dateStr + 'T00:00:00').getDay(); // 0=Sun,6=Sat
-  return (day === 0 || day === 6) ? 1116 : 516;
+// Returns the correct registration amount for an event.
+// For slot-based events with amountWeekend, applies weekend pricing based on date.
+function getEventAmount(key, dateStr) {
+  const e = CONFIG.events[key];
+  if (!e) return 0;
+  if (e.amountWeekend && dateStr) {
+    const day = new Date(dateStr + 'T00:00:00').getDay(); // 0=Sun, 6=Sat
+    return (day === 0 || day === 6) ? e.amountWeekend : e.amount;
+  }
+  return e.amount;
 }
 
 /* ── API helper ──────────────────────────────────────────── */
@@ -161,7 +167,7 @@ function paymentNoteHtml(amount, eventKey, flat, hideStatusLink) {
     `<a href="https://wa.me/91${c.number}?text=${waMsg}" target="_blank" class="step-wa-btn">${waIcon} ${c.name} · ${c.number}</a>`
   ).join('');
   return `<div class="next-steps">
-  <div class="next-steps-title">Final Step to confirm your Registration</div>
+  <div class="next-steps-title">Final Step to confirm your Slot</div>
   <div class="next-step">
     <div class="step-num">1</div>
     <div class="step-content">

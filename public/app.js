@@ -1,6 +1,6 @@
 /* ── Navigation ──────────────────────────────────────────── */
 
-const ALL_SECTIONS = ['home', 'daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
+const ALL_SECTIONS = ['home', ...Object.keys(CONFIG.events)];
 
 function nav(id) {
   ALL_SECTIONS.forEach(s => {
@@ -12,16 +12,16 @@ function nav(id) {
 
 /* ── Render home event cards ─────────────────────────────── */
 
+const CARD_COLORS = ['#C8500A', '#7A2A00', '#F0A500', '#2A6A4A', '#4A2A7A'];
+
 function renderCards() {
   const grid = document.getElementById('events-grid');
-  const keys = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
-
-  const cardColors = ['#C8500A', '#7A2A00', '#F0A500'];
+  const keys = Object.keys(CONFIG.events);
 
   grid.innerHTML = keys.map((key, idx) => {
     const e      = CONFIG.events[key];
     const closed = e.status === 'closed';
-    const color  = cardColors[idx];
+    const color  = CARD_COLORS[idx % CARD_COLORS.length];
 
     const amtClass = closed ? 'closed' : (e.amount === 0 ? 'free' : 'paid');
     const amtText  = closed ? 'Closed' : e.amountLabel;
@@ -53,26 +53,109 @@ function renderCards() {
   }).join('');
 }
 
-function renderEventDetails() {
-  const details = [
-    { key: 'daily-pooja', prefix: 'dp' },
-    { key: 'kumkuma-pooja', prefix: 'kp' },
-    { key: 'ganapathi-homam', prefix: 'gh' },
-  ];
+/* ── Render event form sections ──────────────────────────── */
 
-  details.forEach(({ key, prefix }) => {
-    const event = CONFIG.events[key];
-    document.getElementById(`${prefix}-title`).textContent = `${event.name} Registration`;
-    document.getElementById(`${prefix}-display-date`).textContent = `📅 ${event.displayDate}`;
-    document.getElementById(`${prefix}-time`).textContent = `🕐 ${event.time}`;
-    document.getElementById(`${prefix}-amount`).textContent = event.amountLabel;
+function renderEventSections() {
+  const container = document.getElementById('event-sections');
+  const keys = Object.keys(CONFIG.events);
 
-    if (event.slots) {
-      const slotSelect = document.getElementById(`${prefix}-slot`);
-      slotSelect.innerHTML = '<option value="">Select slot</option>';
-      event.slots.forEach(slot => {
-        slotSelect.add(new Option(slot, slot));
-      });
+  container.innerHTML = keys.map(key => {
+    const e = CONFIG.events[key];
+    const hasSlots = !!e.slots;
+
+    // Slot-based events get visible pickers; fixed events get hidden inputs pre-filled from CONFIG
+    const dateField = hasSlots
+      ? `<div class="field">
+           <label for="${key}-date">Date <span class="req">*</span></label>
+           <input type="date" id="${key}-date">
+         </div>`
+      : `<input type="hidden" id="${key}-date" value="${e.date || ''}">`;
+
+    const slotField = hasSlots
+      ? `<div class="field">
+           <label for="${key}-slot">Slot <span class="req">*</span></label>
+           <select id="${key}-slot">
+             <option value="">Select slot</option>
+           </select>
+         </div>`
+      : `<input type="hidden" id="${key}-slot" value="${e.slot || ''}">`;
+
+    const slotRow = hasSlots
+      ? `<div class="two-col">${dateField}${slotField}</div>`
+      : `${dateField}${slotField}`;
+
+    return `
+<div id="s-${key}" class="section">
+  <div class="topbar">
+    <button class="back-btn" onclick="nav('home')">&#8592; Back</button>
+    <span class="topbar-title">${e.name} Registration</span>
+  </div>
+  <div class="event-strip">
+    <div class="strip-inner">
+      <div class="event-meta">
+        <span>📅 ${e.displayDate}</span>
+        <span>🕐 ${e.time}</span>
+      </div>
+      <span class="amount-pill paid">${e.amountLabel}</span>
+    </div>
+  </div>
+  <div class="container">
+    <div class="form-card">
+      <div class="form-progress" id="${key}-progress">
+        <div class="rangoli-row">
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span><span class="shape circle"></span>
+          <span class="shape diamond"></span><span class="shape circle"></span>
+          <span class="shape petal"></span>
+        </div>
+        <div class="rangoli-line"></div>
+      </div>
+      <div class="field">
+        <label for="${key}-name">Name <span class="req">*</span></label>
+        <input type="text" id="${key}-name" placeholder="Your full name">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="${key}-flat">Flat Number <span class="req">*</span></label>
+          <input type="text" id="${key}-flat" placeholder="e.g. C806">
+        </div>
+        <div class="field">
+          <label for="${key}-phone">Phone <span class="req">*</span></label>
+          <input type="tel" id="${key}-phone" placeholder="10-digit number" maxlength="10">
+        </div>
+      </div>
+      ${slotRow}
+      <button class="submit-btn" id="${key}-submit" onclick="submitEvent('${key}')">
+        <span class="spinner" id="${key}-spinner"></span>
+        <span id="${key}-label">Register</span>
+      </button>
+    </div>
+    <div class="result-box result-success" id="${key}-success">
+      <h3>Registration Confirmed</h3>
+      <div class="reg-id-badge" id="${key}-reg-id"></div>
+      <div id="${key}-payment-note"></div>
+    </div>
+    <div class="result-box result-error" id="${key}-error">
+      <h3 id="${key}-err-title">Error</h3>
+      <p id="${key}-err-msg"></p>
+      <button class="status-link-btn" onclick="window.location.href='status.html'" style="margin-top:10px">
+        Check your status →
+      </button>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+
+  // Wire up date constraints and slot options after DOM is built
+  keys.forEach(key => {
+    const e = CONFIG.events[key];
+    if (e.slots) {
+      const dateEl = document.getElementById(key + '-date');
+      if (dateEl) { dateEl.min = e.dateFrom; dateEl.max = e.dateTo; }
+      const slotEl = document.getElementById(key + '-slot');
+      if (slotEl) e.slots.forEach(s => slotEl.add(new Option(s, s)));
     }
   });
 }
@@ -132,87 +215,40 @@ function collectBase(pfx) {
 }
 
 function baseCheck(pfx, d) {
-  if (!d.name)            { showError(pfx, 'Missing Name', 'Please enter your full name.'); return false; }
-  if (!validFlat(d.flat)) { showError(pfx, 'Invalid Flat', 'Please enter a valid flat number (e.g. C806).'); return false; }
-  if (!validPhone(d.phone)) { showError(pfx, 'Invalid Phone', 'Please enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.'); return false; }
+  if (!d.name)              { showError(pfx, 'Missing Name',    'Please enter your full name.'); return false; }
+  if (!validFlat(d.flat))   { showError(pfx, 'Invalid Flat',    'Please enter a valid flat number (e.g. C806).'); return false; }
+  if (!validPhone(d.phone)) { showError(pfx, 'Invalid Phone',   'Please enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.'); return false; }
   return true;
 }
 
-/* ── Daily Pooja submit ──────────────────────────────────── */
+/* ── Generic event submit ────────────────────────────────── */
 
-async function submitDailyPooja() {
-  clearResults('dp');
-  const d    = collectBase('dp');
-  const date = document.getElementById('dp-date').value;
-  const slot = document.getElementById('dp-slot').value;
+async function submitEvent(key) {
+  clearResults(key);
+  const d    = collectBase(key);
+  const date = document.getElementById(key + '-date').value;
+  const slot = document.getElementById(key + '-slot').value;
+  const e    = CONFIG.events[key];
 
-  if (!baseCheck('dp', d)) return;
-  if (!date) { showError('dp', 'Missing Date', 'Please select a date.'); return; }
-  if (!slot) { showError('dp', 'Missing Slot', 'Please select Morning or Evening.'); return; }
-
-  setLoading('dp', true);
-  try {
-    const res = await api({ action: 'register', event: 'daily-pooja', data: { ...d, date, slot } });
-    if (res.success) {
-      document.getElementById('dp-payment-note').innerHTML = paymentNoteHtml(getDpAmount(date), 'daily-pooja', d.flat);
-      showSuccess('dp', res.regId, d.name);
-    } else {
-      handleRegError('dp', res, d.flat);
-    }
-  } catch (e) {
-    showError('dp', 'Connection Error', e.message);
-  } finally {
-    setLoading('dp', false);
+  if (!baseCheck(key, d)) return;
+  if (e.slots) {
+    if (!date) { showError(key, 'Missing Date', 'Please select a date.'); return; }
+    if (!slot) { showError(key, 'Missing Slot', 'Please select Morning or Evening.'); return; }
   }
-}
 
-/* ── Kumkuma Pooja submit ────────────────────────────────── */
-
-async function submitKumkuma() {
-  clearResults('kp');
-  const d = collectBase('kp');
-
-  if (!baseCheck('kp', d)) return;
-
-  setLoading('kp', true);
+  setLoading(key, true);
   try {
-    const kpCfg = CONFIG.events['kumkuma-pooja'];
-    const res = await api({ action: 'register', event: 'kumkuma-pooja', data: { ...d, date: kpCfg.date, slot: kpCfg.slot } });
+    const res = await api({ action: 'register', event: key, data: { ...d, date, slot } });
     if (res.success) {
-      document.getElementById('kp-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['kumkuma-pooja'].amount, 'kumkuma-pooja', d.flat);
-      showSuccess('kp', res.regId, d.name);
+      document.getElementById(key + '-payment-note').innerHTML = paymentNoteHtml(getEventAmount(key, date), key, d.flat);
+      showSuccess(key, res.regId, d.name);
     } else {
-      handleRegError('kp', res, d.flat);
+      handleRegError(key, res, d.flat);
     }
-  } catch (e) {
-    showError('kp', 'Connection Error', e.message);
+  } catch (err) {
+    showError(key, 'Connection Error', err.message);
   } finally {
-    setLoading('kp', false);
-  }
-}
-
-/* ── Ganapathi Homam submit ──────────────────────────────── */
-
-async function submitHomam() {
-  clearResults('gh');
-  const d = collectBase('gh');
-
-  if (!baseCheck('gh', d)) return;
-
-  setLoading('gh', true);
-  try {
-    const ghCfg = CONFIG.events['ganapathi-homam'];
-    const res = await api({ action: 'register', event: 'ganapathi-homam', data: { ...d, date: ghCfg.date, slot: ghCfg.slot } });
-    if (res.success) {
-      document.getElementById('gh-payment-note').innerHTML = paymentNoteHtml(CONFIG.events['ganapathi-homam'].amount, 'ganapathi-homam', d.flat);
-      showSuccess('gh', res.regId, d.name);
-    } else {
-      handleRegError('gh', res, d.flat);
-    }
-  } catch (e) {
-    showError('gh', 'Connection Error', e.message);
-  } finally {
-    setLoading('gh', false);
+    setLoading(key, false);
   }
 }
 
@@ -220,8 +256,7 @@ async function submitHomam() {
 
 function handleRegError(pfx, res, flat) {
   if (res.error === 'duplicate') {
-    showError(pfx, 'Already Registered',
-      `Flat ${flat} is already registered.`);
+    showError(pfx, 'Already Registered', `Flat ${flat} is already registered.`);
   } else if (res.error === 'blocked') {
     showError(pfx, 'Slot Not Available', res.message);
   } else if (res.error === 'closed') {
@@ -237,14 +272,8 @@ function handleRegError(pfx, res, flat) {
 
 window.addEventListener('load', function () {
   document.getElementById('footer-apt').textContent = CONFIG.APARTMENT_NAME;
-
   renderCards();
-  renderEventDetails();
-
-  const dpDate = document.getElementById('dp-date');
-  const dpCfg  = CONFIG.events['daily-pooja'];
-  dpDate.min   = dpCfg.dateFrom;
-  dpDate.max   = dpCfg.dateTo;
+  renderEventSections();
 
   const hash = window.location.hash.replace('#', '').trim();
   nav(ALL_SECTIONS.includes(hash) ? hash : 'home');

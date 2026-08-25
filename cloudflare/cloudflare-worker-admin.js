@@ -2,7 +2,14 @@
 // Actions: getStatus (public), getAdmin (password), updatePayment (password)
 // Data source: D1 only. Google Sheets sync is handled by cloudflare-worker-sync.js.
 
-const EVENTS = ['daily-pooja', 'kumkuma-pooja', 'ganapathi-homam'];
+// Add new events here — EVENTS list is derived from this config.
+// No other changes needed in this worker when adding an event.
+const EVENT_CONFIG = {
+  'daily-pooja':     {},
+  'kumkuma-pooja':   {},
+  'ganapathi-homam': {},
+};
+const EVENTS = Object.keys(EVENT_CONFIG);
 
 /* ── Auth helpers ────────────────────────────────────────── */
 
