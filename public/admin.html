@@ -34,7 +34,10 @@
 <div id="admin-screen">
   <div class="admin-topbar">
     <div id="user-pill" class="user-pill" style="display:none;"></div>
-    <button class="logout-btn" onclick="refreshAdmin()" id="refresh-btn" style="background:var(--teal); border-color:rgba(201,168,76,0.4); color:var(--gold);">&#8635; Refresh</button>
+    <div style="display:flex;gap:8px;">
+      <button class="logout-btn" onclick="refreshAdmin()" id="refresh-btn" style="background:var(--teal); border-color:rgba(201,168,76,0.4); color:var(--gold);">&#8635; Refresh</button>
+      <button class="logout-btn" onclick="exportCSV()" id="export-btn" style="background:var(--teal); border-color:rgba(201,168,76,0.4); color:var(--gold);">&#8595; Export</button>
+    </div>
   </div>
   
   <div class="summary-bar" id="summary-bar"></div>

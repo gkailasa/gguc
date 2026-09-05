@@ -391,6 +391,69 @@ function renderActiveTabContent() {
   container.appendChild(cardsList);
 }
 
+/* ── CSV Export ── */
+function exportCSV() {
+  const eventKeys = Object.keys(EVENT_LABELS);
+  const eventKey  = eventKeys[activeTabIndex];
+  const eventObj  = globalAdminData[eventKey];
+  const rows      = (eventObj && Array.isArray(eventObj.rows)) ? eventObj.rows : [];
+
+  // Apply same filters as renderActiveTabContent
+  const filteredRows = rows.filter(r => {
+    const matchesStatus =
+      currentStatusFilter === 'ALL'      ? true :
+      currentStatusFilter === 'RECEIVED' ? r['Payment Status'] === 'Received' :
+                                           r['Payment Status'] !== 'Received';
+    if (!matchesStatus) return false;
+
+    if (eventKey === 'daily-pooja' && currentSelectedDate !== 'ALL') {
+      if (r['Date'] !== currentSelectedDate) return false;
+    }
+
+    if (!currentSearchQuery) return true;
+    const flat  = String(r['Flat']   || '').toLowerCase();
+    const name  = String(r['Name']   || '').toLowerCase();
+    const phone = String(r['Phone']  || '').toLowerCase();
+    const regId = String(r['Reg ID'] || '').toLowerCase();
+    return flat.includes(currentSearchQuery) || name.includes(currentSearchQuery) ||
+           phone.includes(currentSearchQuery) || regId.includes(currentSearchQuery);
+  });
+
+  if (filteredRows.length === 0) {
+    alert('No data to export for current filters.');
+    return;
+  }
+
+  const esc = v => `"${String(v || '').replace(/"/g, '""')}"`;
+
+  const headers = ['Reg ID', 'Name', 'Flat', 'Phone', 'Date', 'Slot', 'Payment Status', 'Payment Date', 'Registered On'];
+  const csvRows = [headers.map(esc).join(',')];
+
+  filteredRows.forEach(r => {
+    csvRows.push([
+      r['Reg ID']         || '',
+      r['Name']           || '',
+      r['Flat']           || '',
+      r['Phone']          || '',
+      r['Date']           || '',
+      r['Slot']           || '',
+      r['Payment Status'] || '',
+      r['Payment Date']   || '',
+      r['Timestamp']      || ''
+    ].map(esc).join(','));
+  });
+
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `gguc-${eventKey}-${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 window.addEventListener('load', () => {
   const pwdInput = document.getElementById('pwd-input');
   if (pwdInput) pwdInput.focus();

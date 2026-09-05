@@ -2,6 +2,18 @@
   publish = "public"
 
 [[redirects]]
+  from = "/api"
+  to = "https://ggucapi.giri-kailasam.workers.dev/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/adminapi"
+  to = "https://ggucadmin.giri-kailasam.workers.dev/"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/admin"
   to = "/admin.html"
   status = 200

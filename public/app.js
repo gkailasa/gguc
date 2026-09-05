@@ -43,7 +43,7 @@ function renderCards() {
 
 /* ── Init ────────────────────────────────────────────────── */
 
-window.addEventListener('load', function () {
+document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('footer-apt').textContent = CONFIG.APARTMENT_NAME;
   renderCards();
 });
