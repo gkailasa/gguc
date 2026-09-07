@@ -19,9 +19,9 @@ const CONFIG = {
     'daily-pooja': {
       name:        'Daily Pooja',
       emoji:       '🪔',
-      displayDate: 'Sep 15–24, 2026',
+      displayDate: 'Sep 15–20, 2026',
       dateFrom:    '2026-09-15',          // date picker min (Sep 14 blocked for sponsors)
-      dateTo:      '2026-09-24',          // date picker max
+      dateTo:      '2026-09-20',          // date picker max
       time:        'Morning & Evening',
       place:       'Ganapathi Mandapam',
       amount:        516,                  // weekday amount
@@ -39,8 +39,8 @@ const CONFIG = {
       slot:        'Evening',
       time:        '4:00 PM – 6:00 PM',
       place:       'Ganapathi Mandapam',
-      amount:      216,
-      amountLabel: '₹216 / person',
+      amount:      316,
+      amountLabel: '₹316 / person',
       description: 'A special Kumkuma Pooja for all ladies of the community. All residents are warmly invited.',
       status:      'active',
     },
@@ -54,7 +54,7 @@ const CONFIG = {
       place:       'Ganapathi Mandapam',
       amount:      2116,
       amountLabel: '₹2116 / family',
-      description: 'An auspicious Ganapathi Homam for prosperity and well-being of all families.',
+      description: 'An auspicious Ganapathi Homam for prosperity and well-being of all families. Limited to 10 families — register early to secure your spot.',
       status:      'active',
     }
   }

@@ -8,10 +8,12 @@ const EVENT_CONFIG = {
   'daily-pooja': {
     idPrefix:     'DP',
     maxPerSlot:   10,
+    dateFrom:     '2026-09-15',
+    dateTo:       '2026-09-20',
     blockedSlots: [
       { date: '2026-09-14', slot: 'Morning' },
       { date: '2026-09-14', slot: 'Evening' },
-      { date: '2026-09-24', slot: 'Evening' },
+      { date: '2026-09-20', slot: 'Evening' },
     ],
   },
   'kumkuma-pooja': {
@@ -34,6 +36,10 @@ async function handleRegister(db, event, data) {
   const normalizedFlat = flat ? flat.trim().toLowerCase() : '';
 
   if (cfg.maxPerSlot) {
+    // Check date range
+    if (cfg.dateFrom && cfg.dateTo && (date < cfg.dateFrom || date > cfg.dateTo)) {
+      return { success: false, error: 'blocked', message: 'This date is not available for registration.' };
+    }
     // Check blocked slots
     const blocked = (cfg.blockedSlots || []).find(b => b.date === date && b.slot === slot);
     if (blocked) return { success: false, error: 'blocked', message: 'This slot is not available to register.' };
