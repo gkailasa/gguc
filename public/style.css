@@ -616,7 +616,25 @@ body {
   margin-bottom: 18px;
 }
 
-.card-actions { display: flex; gap: 9px; }
+.card-actions { display: flex; gap: 9px; align-items: stretch; }
+.card-stats-btn {
+  width: 46px;
+  flex-shrink: 0;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.card-stats-btn:hover {
+  border-color: var(--gold);
+  color: var(--dark2);
+  background: rgba(201,168,76,0.1);
+}
 .card-btn {
   flex: 1;
   padding: 12px 13px;
@@ -798,4 +816,153 @@ body {
 }
 .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
 .empty-state p { font-size: 14px; line-height: 1.7; }
+
+/* ── ════════════════════════════════════════════════════ */
+/* ── STATS MODAL                                        */
+/* ── ════════════════════════════════════════════════════ */
+
+#stats-modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+}
+#stats-modal {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-height: 88vh;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  z-index: 201;
+  display: none;
+  overflow: hidden;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform: translateY(100%);
+  opacity: 0;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+}
+#stats-modal.open { transform: translateY(0); opacity: 1; }
+
+.stats-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+.stats-modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dark);
+}
+.stats-modal-close {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: #f2f2f2;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--dark2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.stats-modal-close:hover { background: #e8e8e8; }
+
+.stats-modal-body {
+  overflow-y: auto;
+  max-height: calc(88vh - 58px);
+  padding: 16px 20px 8px;
+}
+
+/* ── Bar chart ── */
+.stats-date-group { margin-bottom: 18px; }
+.stats-date-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 7px;
+}
+.stats-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.stats-bar-label {
+  width: 66px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--dark2);
+  font-weight: 500;
+}
+.stats-bar-track {
+  flex: 1;
+  height: 10px;
+  background: #efefef;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.stats-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.bar-mid  { background: var(--green); }
+.bar-high { background: var(--saffron); }
+.bar-full { background: var(--red); }
+
+.stats-bar-count {
+  width: 56px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dark2);
+  text-align: right;
+  white-space: nowrap;
+}
+.stats-bar-count.count-full { color: var(--red); }
+.stats-bar-blocked {
+  font-size: 11px;
+  color: #bbb;
+  font-style: italic;
+  margin-left: 4px;
+}
+
+/* Larger bar for homam */
+.stats-homam-bar { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.stats-bar-row-lg .stats-bar-track { height: 14px; border-radius: 7px; }
+.stats-bar-row-lg .stats-bar-fill  { border-radius: 7px; }
+.stats-bar-row-lg .stats-bar-label { font-size: 14px; font-weight: 600; width: 72px; }
+.stats-bar-row-lg .stats-bar-count { font-size: 13px; }
+
+/* ── Count display (Kumkuma Pooja) ── */
+.stats-summary-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.stats-big-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1;
+}
+.stats-big-label { font-size: 15px; color: var(--muted); }
+
+.stats-loading { text-align: center; padding: 36px 0; color: var(--muted); font-size: 14px; }
+.stats-error   { color: var(--red); font-size: 14px; padding: 20px 0; text-align: center; }
+.stats-empty   { color: var(--muted); font-size: 14px; padding: 12px 0; }
 

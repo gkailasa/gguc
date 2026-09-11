@@ -215,6 +215,18 @@ function setupGlobalFilterListeners() {
   };
 }
 
+function animateCount(el, target, duration = 800) {
+  if (target === 0) { el.textContent = '0'; return; }
+  const start = performance.now();
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = Math.round(ease * target);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function renderSummaryCards() {
   const summaryBar = document.getElementById('summary-bar');
   summaryBar.innerHTML = '';
@@ -230,7 +242,7 @@ function renderSummaryCards() {
     const card = document.createElement('div');
     card.className = 'summary-card';
     card.innerHTML = `
-      <div class="count">${total}</div>
+      <div class="count">0</div>
       <div class="label">${label}</div>
       ${total > 0 ? `
         <div class="summary-status">
@@ -239,6 +251,7 @@ function renderSummaryCards() {
       ` : '<div class="summary-status" style="color:var(--muted)">0 entries</div>'}
     `;
     summaryBar.appendChild(card);
+    animateCount(card.querySelector('.count'), total);
   });
 }
 
@@ -377,7 +390,8 @@ function renderActiveTabContent() {
       </div>
 
       <div class="card-actions">
-        ${rawPhone ? `<a href="tel:${rawPhone}" class="card-btn-call">📞 Call</a>` : ''}
+        ${rawPhone ? `<a href="tel:${rawPhone}" class="card-btn-call">&#128222; Call</a>` : ''}
+        ${!isPaid && rawPhone ? (() => { const waUrl = buildWaFollowupUrl(row, eventKey); return waUrl ? `<a href="${waUrl}" target="_blank" class="card-btn-wa">&#128172; Remind</a>` : ''; })() : ''}
         ${!isPaid && currentUser && currentUser.canUpdate ? `
           <button class="card-btn-pay" onclick="openConfirmModal('${row['Reg ID']}', '${eventKey}', '${row['Flat']}', '${row['Name']}')">
             Mark Paid
@@ -389,6 +403,30 @@ function renderActiveTabContent() {
   });
 
   container.appendChild(cardsList);
+}
+
+/* ── WhatsApp Follow-up ── */
+function buildWaFollowupUrl(row, eventKey) {
+  const name      = row['Name'] || 'Resident';
+  const eventName = EVENT_LABELS[eventKey] || eventKey;
+  const phone     = String(row['Phone'] || '').replace(/\D/g, '');
+  if (!phone) return null;
+
+  let eventDetails = `*${eventName}*`;
+  if (row['Date']) {
+    const dateLabel = fmtEventDate(row['Date']);
+    eventDetails += ` on *${dateLabel}*`;
+    if (row['Slot']) eventDetails += ` (${row['Slot']} slot)`;
+  }
+
+  const msg =
+    `Dear Sir/Madam 🙏\n\n` +
+    `You had registered for ${eventDetails}.\n\n` +
+    `We see that the payment is still pending. If you have already paid, kindly share the payment screenshot so we can update your status.\n\n` +
+    `Thank you for being part of Ganesh Chaturthi 2026. 🎉\n` +
+    `— GGUC Pooja Committee`;
+
+  return `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
 }
 
 /* ── CSV Export ── */

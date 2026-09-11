@@ -108,28 +108,20 @@ function fmtDate(ts) {
 
 function openPayModal(amount, eventKey, flat) {
   const evCfg   = CONFIG.events[eventKey] || {};
-  const note    = flat ? `${evCfg.name || eventKey} - Flat ${flat}` : (evCfg.name || eventKey);
-  const upiEnc   = s => encodeURIComponent(s).replace(/%20/g, '+');
-  const upiQuery = `pa=${upiEnc(CONFIG.UPI_ID)}&pn=${upiEnc(CONFIG.APARTMENT_NAME)}&am=${amount}&cu=INR&tn=${upiEnc(note)}`;
+  const note    = flat ? `Flat ${flat}` : 'GGUC';
+  const upiQuery = `pa=${CONFIG.UPI_ID}&am=${amount}&cu=INR&tn=${note}`;
 
   document.getElementById('pay-modal-title').textContent = `Pay \u20B9${amount}`;
   document.getElementById('pay-modal-sub').textContent   = evCfg.name || '';
   document.getElementById('pay-modal-upi').textContent   = CONFIG.UPI_ID;
 
-  const payApps = [
-    { name: 'GPay',     href: `tez://upi/pay?${upiQuery}`,  icon: 'icons/gpay.svg' },
-    { name: 'PhonePe',  href: `phonepe://pay?${upiQuery}`,   icon: 'icons/phonepay.svg' },
-    { name: 'Paytm',    href: `paytmmp://pay?${upiQuery}`,   icon: 'icons/paytm.svg' },
-    { name: 'BHIM',     href: `upi://pay?${upiQuery}`,       icon: 'icons/Bhim.svg' },
-  ];
-  document.getElementById('pay-modal-btns').innerHTML = payApps.map(app =>
-    `<a href="${app.href}" onclick="closePayModal()" class="pay-app-btn" title="${app.name}">
-      <img src="${app.icon}" width="36" height="36">
-    </a>`
-  ).join('');
+  document.getElementById('pay-modal-btns').innerHTML = '';
 
   const qrEl = document.getElementById('pay-modal-qr');
-  qrEl.innerHTML = '<img src="galaxy_cultural_qr.jpg" width="240" height="240" style="border-radius:8px;display:block;" alt="UPI QR Code">';
+  qrEl.innerHTML = `<div style="text-align:center;">
+    <a href="galaxy_cultural_qr.jpg" target="_blank"><img src="galaxy_cultural_qr.jpg" width="240" height="240" style="border-radius:8px;display:block;margin:0 auto;" alt="UPI QR Code"></a>
+    <button onclick="downloadQR()" style="display:inline-block;margin-top:12px;font-size:14px;color:#fff;background:#8B1A1A;border:none;cursor:pointer;font-weight:600;padding:10px 28px;border-radius:8px;letter-spacing:0.5px;">Save / Open QR</button>
+  </div>`;
 
   document.getElementById('pay-modal-backdrop').style.display = 'block';
   const modal = document.getElementById('pay-modal');
@@ -155,6 +147,26 @@ function copyUpiId() {
     btn.textContent = '✓';
     setTimeout(() => { btn.innerHTML = '&#x2398;'; }, 2000);
   });
+}
+
+async function downloadQR() {
+  const url = 'galaxy_cultural_qr.jpg';
+  try {
+    const res  = await fetch(url);
+    const blob = await res.blob();
+    const file = new File([blob], 'GGUC-UPI-QR.jpg', { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'GGUC UPI QR Code' });
+    } else {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'GGUC-UPI-QR.jpg';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+  } catch (e) {
+    window.open(url, '_blank');
+  }
 }
 
 function paymentNoteHtml(amount, eventKey, flat, hideStatusLink) {

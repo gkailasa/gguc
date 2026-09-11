@@ -146,7 +146,7 @@ body {
   box-shadow: 0 2px 6px rgba(139,26,26,0.04);
 }
 .summary-card .count {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 26px;
   font-weight: 700;
   color: var(--red);
@@ -325,6 +325,20 @@ body {
   min-height: 40px;
   background: rgba(13,53,53,0.08);
   color: var(--teal);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 8px;
+  touch-action: manipulation;
+}
+.card-btn-wa {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  background: #e8f5e9;
+  color: #1b5e20;
   text-decoration: none;
   font-weight: 700;
   font-size: 13px;

@@ -81,6 +81,29 @@ async function handleRegister(db, event, data) {
   return { success: true, regId };
 }
 
+/* ── Get Stats Handler ───────────────────────────────────── */
+
+async function handleGetStats(db) {
+  const { results: dp } = await db.prepare(
+    `SELECT event_date, slot, COUNT(*) as count FROM registrations WHERE event_key = 'daily-pooja' GROUP BY event_date, slot ORDER BY event_date, slot`
+  ).all();
+
+  const kpCount = await db.prepare(
+    `SELECT COUNT(*) as count FROM registrations WHERE event_key = 'kumkuma-pooja'`
+  ).first();
+
+  const ghCount = await db.prepare(
+    `SELECT COUNT(*) as count FROM registrations WHERE event_key = 'ganapathi-homam'`
+  ).first();
+
+  return {
+    dailyPooja:     dp  || [],
+    kumkumaPooja:   kpCount?.count ?? 0,
+    ganapathiHomam: ghCount?.count ?? 0,
+    blockedSlots:   EVENT_CONFIG['daily-pooja'].blockedSlots || [],
+  };
+}
+
 /* ── Get Status Handler ──────────────────────────────────── */
 
 async function handleGetStatus(db, query) {
@@ -132,6 +155,8 @@ export default {
         result = await handleRegister(env.DB, event, data);
       } else if (action === 'getStatus') {
         result = await handleGetStatus(env.DB, query);
+      } else if (action === 'getStats') {
+        result = await handleGetStats(env.DB);
       } else {
         result = { error: 'unknown action' };
       }
